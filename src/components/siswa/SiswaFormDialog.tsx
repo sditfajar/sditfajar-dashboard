@@ -39,7 +39,7 @@ const formSchema = z.object({
   kelas: z.string().min(1, "Kelas wajib diisi"),
   namaWali: z.string().min(1, "Nama wali wajib diisi"),
   whatsappOrtu: z.string().min(1, "Nomor WhatsApp wajib diisi"),
-  status: z.enum(["Aktif", "Tidak Aktif"] as const),
+  status: z.enum(["Aktif", "Tidak Aktif", "Lulus"] as const),
 });
 
 export type SiswaFormValues = z.infer<typeof formSchema>;
@@ -192,6 +192,7 @@ export function SiswaFormDialog({
                     <SelectContent>
                       <SelectItem value="Aktif">Aktif</SelectItem>
                       <SelectItem value="Tidak Aktif">Tidak Aktif</SelectItem>
+                      <SelectItem value="Lulus" className="text-green-600 font-medium">Lulus</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

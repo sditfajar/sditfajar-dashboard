@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 
-export type SiswaStatus = "Aktif" | "Tidak Aktif";
+export type SiswaStatus = "Aktif" | "Tidak Aktif" | "Lulus";
 
 export interface Siswa {
   nisn: string;

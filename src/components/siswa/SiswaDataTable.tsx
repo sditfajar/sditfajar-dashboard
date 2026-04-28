@@ -20,7 +20,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit, Trash2, Search, Plus, Filter } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { MoreHorizontal, Edit, Trash2, Search, Plus, Filter, Eye } from "lucide-react";
 import { Siswa } from "@/types/siswa";
 import {
   Select,
@@ -47,6 +53,7 @@ export function SiswaDataTable({
 }: SiswaDataTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterKelas, setFilterKelas] = useState<string>("semua");
+  const [viewSiswa, setViewSiswa] = useState<Siswa | null>(null);
 
   const uniqueKelas = useMemo(() => {
     const kelasSet = new Set(data.map((s) => s.kelas).filter(Boolean));
@@ -167,38 +174,52 @@ export function SiswaDataTable({
                         <TableCell>{siswa.namaWali}</TableCell>
                         <TableCell>{siswa.whatsappOrtu}</TableCell>
                         <TableCell>
-                          <Badge variant={getStatusBadgeVariant(siswa.status)}>
+                          <Badge 
+                            variant={getStatusBadgeVariant(siswa.status)}
+                            className={siswa.status === "Lulus" ? "bg-green-500 hover:bg-green-600 text-white" : ""}
+                          >
                             {siswa.status}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Buka menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => onEdit(siswa)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => {
-                                  if (window.confirm("Apakah Anda yakin ingin menghapus data ini?")) {
-                                    onDelete(siswa.nisn);
-                                  }
-                                }}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Hapus
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+                              onClick={() => setViewSiswa(siswa)}
+                              title="Lihat Detail"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <span className="sr-only">Buka menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => onEdit(siswa)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => {
+                                    if (window.confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+                                      onDelete(siswa.nisn);
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Hapus
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -208,6 +229,45 @@ export function SiswaDataTable({
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={!!viewSiswa} onOpenChange={(open) => !open && setViewSiswa(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Detail Siswa</DialogTitle>
+          </DialogHeader>
+          {viewSiswa && (
+            <div className="space-y-4 py-4">
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold">{viewSiswa.namaLengkap}</h3>
+                <p className="text-sm text-muted-foreground">NIS/NISN: {viewSiswa.nisn}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-sm">
+                <div>
+                  <span className="text-muted-foreground block mb-1">Kelas</span>
+                  <span className="font-medium">{viewSiswa.kelas}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block mb-1">Status</span>
+                  <Badge 
+                    variant={getStatusBadgeVariant(viewSiswa.status)}
+                    className={viewSiswa.status === "Lulus" ? "bg-green-500 hover:bg-green-600 text-white" : ""}
+                  >
+                    {viewSiswa.status}
+                  </Badge>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block mb-1">Nama Wali</span>
+                  <span className="font-medium">{viewSiswa.namaWali}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block mb-1">Kontak Wali</span>
+                  <span className="font-medium">{viewSiswa.whatsappOrtu}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -49,7 +49,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <motion.div 
+      <motion.div
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         variants={containerVariants}
         initial="hidden"
@@ -61,7 +61,7 @@ export default function DashboardPage() {
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-8 border border-blue-500/20 h-full transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1">
               <div className="absolute -right-6 -top-6 text-blue-500/10 group-hover:text-blue-500/20 transition-colors">
                 <svg width="160" height="160" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <motion.path 
+                  <motion.path
                     d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8l-4 4v14a2 2 0 0 0 2 2z"
                     initial={{ pathLength: 0 }}
                     animate={{ pathLength: 1 }}
@@ -122,26 +122,26 @@ export default function DashboardPage() {
           <Link href="/absensi" className="group block h-full">
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 p-8 border border-emerald-500/20 h-full transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10 hover:-translate-y-1">
               <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
-                 <motion.svg width="300" height="300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                    <motion.rect x="3" y="4" width="18" height="18" rx="2" ry="2" 
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                    />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                    <motion.path d="M9 16l2 2 4-4" 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: [0, 1, 0] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                 </motion.svg>
+                <motion.svg width="300" height="300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                  <motion.rect x="3" y="4" width="18" height="18" rx="2" ry="2"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                  />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                  <motion.path d="M9 16l2 2 4-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 1, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                </motion.svg>
               </div>
               <div className="relative z-10 flex flex-col items-center justify-center h-full text-center">
                 <CalendarCheck className="w-12 h-12 text-emerald-500 mb-4 group-hover:scale-110 transition-transform duration-500" />
                 <h2 className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight leading-none">
-                  REKAP ABSENSI
+                  Absensi Siswa
                 </h2>
                 <div className="mt-4 flex items-center text-sm font-medium text-emerald-600 dark:text-emerald-400 group-hover:underline">
                   Kelola Kehadiran <ArrowUpRight className="ml-1 w-4 h-4" />
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                 <BarChart3 className="w-5 h-5 text-primary" />
               </div>
             </div>
-            
+
             <div className="flex-1 relative min-h-[250px] w-full flex items-end justify-between gap-2 sm:gap-4 pt-10">
               {/* Background Grid Lines */}
               <div className="absolute inset-0 flex flex-col justify-between z-0">
@@ -171,7 +171,7 @@ export default function DashboardPage() {
                   <div key={i} className="w-full h-[1px] bg-border/50" />
                 ))}
               </div>
-              
+
               {/* Animated Bars */}
               {[
                 { month: "Jan", value: 30 },
@@ -186,7 +186,7 @@ export default function DashboardPage() {
                   <div className="absolute -top-8 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0">
                     {data.value} Siswa
                   </div>
-                  <motion.div 
+                  <motion.div
                     className="w-full max-w-[40px] bg-gradient-to-t from-primary/50 to-primary rounded-t-md"
                     initial={{ height: 0 }}
                     animate={{ height: `${data.value}%` }}
