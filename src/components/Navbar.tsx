@@ -37,9 +37,9 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button variant="ghost" size="icon" className="rounded-full" asChild>
-              <Link href="/dashboard" title="Dashboard">
+              <Link href="/admin" title="Login">
                 <LogIn className="h-5 w-5" />
-                <span className="sr-only">Dashboard</span>
+                <span className="sr-only">Login</span>
               </Link>
             </Button>
           </div>
@@ -52,9 +52,9 @@ export function Navbar() {
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle />
           <Button variant="ghost" size="icon" className="rounded-full" asChild>
-            <Link href="/dashboard" title="Dashboard">
+            <Link href="/admin" title="Login">
               <LogIn className="h-5 w-5" />
-              <span className="sr-only">Dashboard</span>
+              <span className="sr-only">Login</span>
             </Link>
           </Button>
           <Sheet open={isOpen} onOpenChange={setIsOpen}>

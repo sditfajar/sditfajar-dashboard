@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { LayoutDashboard, Users, UserCog, CreditCard, Newspaper, FileText, ClipboardList, MessageSquare } from "lucide-react";
 
 export const adminLinks = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Dashboard Admin", href: "/admin", icon: LayoutDashboard },
   { name: "Manajemen Siswa", href: "/siswa", icon: Users },
   { name: "Manajemen Guru", href: "/guru", icon: UserCog },
   { name: "Absensi", href: "/absensi", icon: ClipboardList },
@@ -23,7 +23,7 @@ export function Sidebar() {
   return (
     <aside className="hidden w-64 flex-col border-r bg-background md:flex min-h-screen">
       <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+        <Link href="/admin" className="flex items-center gap-2 font-semibold">
           <span className="text-lg flex items-center"><Image src="/favicon.png" alt="Logo" width={30} height={30} className="h-6 w-6 mr-2 object-contain" />SDIT Fajar Admin</span>
         </Link>
       </div>

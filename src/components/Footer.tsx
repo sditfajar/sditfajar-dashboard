@@ -10,7 +10,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div className="sm:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <Image src="/logo-sdit.png" alt="SDIT Fajar Logo" width={48} height={48} className="h-12 w-auto" />
+              <Image src="/favicon.png" alt="SDIT Fajar Logo" width={48} height={48} className="h-12 w-auto" />
               <span className="text-2xl font-bold tracking-tight"></span>
             </Link>
             <p className="text-slate-300 dark:text-blue-200/70 max-w-sm mb-6">Mewujudkan generasi Qur&apos;ani yang cerdas, mandiri, berprestasi, dan berwawasan global untuk masa depan gemilang.</p>
