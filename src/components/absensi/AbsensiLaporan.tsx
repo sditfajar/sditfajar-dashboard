@@ -27,6 +27,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import * as XLSX from "xlsx";
+import { FileDown } from "lucide-react";
 
 import { RekapAbsensi } from "@/types/absensi";
 import {
@@ -49,6 +59,27 @@ export function AbsensiLaporan() {
   
   const [data, setData] = useState<RekapAbsensi[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+
+  const handleExport = () => {
+    const excelData = filteredData.map((row) => ({
+      "NISN": row.studentId,
+      "Nama Siswa": row.nama,
+      "Kelas": row.kelas,
+      "Hadir": row.hadir,
+      "Sakit": row.sakit,
+      "Izin": row.izin,
+      "Alpa": row.alpa,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Absensi");
+    
+    XLSX.writeFile(workbook, `Laporan_Absensi_Bulan_${selectedMonth}_Tahun_${selectedYear}.xlsx`);
+    
+    setIsExportOpen(false);
+  };
 
   useEffect(() => {
     loadData();
@@ -99,8 +130,9 @@ export function AbsensiLaporan() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-center gap-4">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Bulan:</span>
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="w-[150px]">
@@ -148,6 +180,12 @@ export function AbsensiLaporan() {
             </SelectContent>
           </Select>
         </div>
+        </div>
+
+        <Button onClick={() => setIsExportOpen(true)} className="gap-2" disabled={filteredData.length === 0}>
+          <FileDown className="h-4 w-4" />
+          Export Excel
+        </Button>
       </div>
 
       <div className="border rounded-lg overflow-hidden bg-background">
@@ -167,8 +205,14 @@ export function AbsensiLaporan() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
-                    Memuat data...
+                  <TableCell colSpan={7} className="h-40 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-4 text-muted-foreground">
+                      <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <p className="text-sm font-medium animate-pulse">Memuat laporan...</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : filteredData.length === 0 ? (
@@ -194,6 +238,25 @@ export function AbsensiLaporan() {
           </Table>
         </div>
       </div>
+
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Export</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin mengexport data laporan absensi ini ke format file Excel (.xlsx)?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex sm:justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsExportOpen(false)}>
+              Tidak
+            </Button>
+            <Button onClick={handleExport}>
+              Yakin
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
