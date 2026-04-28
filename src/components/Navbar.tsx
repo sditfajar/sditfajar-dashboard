@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Menu, GraduationCap } from 'lucide-react';
+import { Menu, GraduationCap, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
@@ -34,7 +34,15 @@ export function Navbar() {
               {link.name}
             </Link>
           ))}
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" size="icon" className="rounded-full" asChild>
+              <Link href="/dashboard" title="Dashboard">
+                <LogIn className="h-5 w-5" />
+                <span className="sr-only">Dashboard</span>
+              </Link>
+            </Button>
+          </div>
           <Button asChild>
             <Link href="/pendaftaran">Daftar Sekarang</Link>
           </Button>
@@ -43,6 +51,12 @@ export function Navbar() {
         {/* Mobile Nav */}
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle />
+          <Button variant="ghost" size="icon" className="rounded-full" asChild>
+            <Link href="/dashboard" title="Dashboard">
+              <LogIn className="h-5 w-5" />
+              <span className="sr-only">Dashboard</span>
+            </Link>
+          </Button>
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">

@@ -4,7 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 
-const poppins = Poppins({ 
+const poppins = Poppins({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 });
@@ -12,6 +12,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "SDIT Fajar | Cerdas, Kreatif, Berakhlak Mulia",
   description: "Website resmi SDIT Fajar - Mewujudkan generasi cerdas, kreatif, dan berakhlak mulia.",
+  icons: {
+    icon: '/favicon.png', // Tambahkan baris ini HANYA jika pakai format PNG/SVG
+  },
 };
 
 export default function RootLayout({
