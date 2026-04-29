@@ -10,14 +10,20 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { adminLinks } from "./Sidebar";
+import { guruLinks } from "@/components/guru/SidebarGuru";
 import { SidebarNav } from "./SidebarNav";
+import { SidebarProfile } from "./SidebarProfile";
 import { ThemeToggle } from "./ThemeToggle";
 
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase/config";
 import { signOut } from "firebase/auth";
 
-export function Navbar() {
+interface NavbarProps {
+  isGuruMode?: boolean;
+}
+
+export function Navbar({ isGuruMode = false }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -45,7 +51,7 @@ export function Navbar() {
 
         <SheetContent side="left" className="flex flex-col w-[70vw] sm:w-[300px]">
           <SheetHeader className="text-left mb-4">
-            <Link href="/admin" onClick={() => setOpen(false)} className="flex items-center gap-3">
+            <Link href={isGuruMode ? "/dashboard-guru" : "/admin"} onClick={() => setOpen(false)} className="flex items-center gap-3">
               <Image
                 src="/favicon.png"
                 alt="Logo SDIT Fajar"
@@ -53,12 +59,20 @@ export function Navbar() {
                 height={32}
                 className="rounded-md"
               />
-              <SheetTitle>SDIT Fajar Admin</SheetTitle>
+              <div className="flex flex-col">
+                <span className="text-[11px] font-normal text-gray-500 leading-tight">
+                  {isGuruMode ? "Portal Guru" : "Dashboard Admin"}
+                </span>
+                <SheetTitle className="leading-tight mt-0">SDIT Fajar</SheetTitle>
+              </div>
             </Link>
           </SheetHeader>
 
           <div className="flex-1 overflow-auto py-2">
-            <SidebarNav items={adminLinks} onNavigate={() => setOpen(false)} />
+            <SidebarNav items={isGuruMode ? guruLinks : adminLinks} onNavigate={() => setOpen(false)} />
+          </div>
+          <div className="-mx-6">
+            <SidebarProfile />
           </div>
         </SheetContent>
       </Sheet>

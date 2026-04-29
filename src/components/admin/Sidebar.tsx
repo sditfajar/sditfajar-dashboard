@@ -14,6 +14,7 @@ import {
   Settings,
 } from "lucide-react";
 import { NavItem, SidebarNav } from "./SidebarNav";
+import { SidebarProfile } from "./SidebarProfile";
 
 export const adminLinks: NavItem[] = [
   { name: "Dashboard Admin", href: "/admin", icon: LayoutDashboard },
@@ -62,9 +63,9 @@ export function Sidebar() {
             <Image
               src="/favicon.png"
               alt="Logo"
-              width={30}
-              height={30}
-              className="h-6 w-6 mr-2 object-contain"
+              width={32}
+              height={32}
+              className="h-8 w-8 mr-2 object-contain"
             />
             <div className="flex flex-col leading-tight">
               {/* edited */}
@@ -77,6 +78,7 @@ export function Sidebar() {
       <div className="flex-1 overflow-auto py-4 px-2">
         <SidebarNav items={adminLinks} />
       </div>
+      <SidebarProfile />
     </aside>
   );
 }

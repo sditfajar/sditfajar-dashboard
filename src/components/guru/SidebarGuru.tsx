@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { LayoutDashboard, Calendar, Users, ClipboardList } from "lucide-react";
 import { NavItem, SidebarNav } from "@/components/admin/SidebarNav";
+import { SidebarProfile } from "@/components/admin/SidebarProfile";
 
 export const guruLinks: NavItem[] = [
   { name: "Dashboard Guru", href: "/dashboard-guru", icon: LayoutDashboard },
@@ -32,6 +33,7 @@ export function SidebarGuru() {
       <div className="flex-1 overflow-auto py-4 px-2">
         <SidebarNav items={guruLinks} />
       </div>
+      <SidebarProfile />
     </aside>
   );
 }
