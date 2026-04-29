@@ -9,6 +9,7 @@ export default async function GuruLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // 💡 Jika Anda memakai Next.js 15, ubah menjadi: const cookieStore = await cookies();
   const cookieStore = cookies();
   const session = cookieStore.get("session")?.value || "";
 
@@ -16,14 +17,34 @@ export default async function GuruLayout({
     redirect("/login");
   }
 
+  let decodedClaims = null;
+
   if (!adminAuth) {
     console.warn("Admin Auth is not initialized. Bypassing secure session check for now.");
   } else {
+    // 1. Verifikasi cookie dilakukan di DALAM try-catch
     try {
-      await adminAuth.verifySessionCookie(session, true);
+      decodedClaims = await adminAuth.verifySessionCookie(session, true);
     } catch (error) {
       console.error("Invalid session cookie:", error);
-      redirect("/login");
+      // Jangan taruh redirect() di sini
+    }
+  }
+
+  // 2. Jika verifikasi gagal (session kadaluarsa), lakukan redirect di LUAR try-catch
+  if (!decodedClaims && adminAuth) {
+    redirect("/login");
+  }
+
+  // 3. PROTEKSI ROLE
+  if (decodedClaims) {
+    // Cek role dari token Firebase atau dari cookie fallback
+    const userRole = decodedClaims.role || cookieStore.get("userRole")?.value;
+
+    // Pastikan hanya role "guru" atau "teacher" yang boleh masuk
+    if (userRole !== "guru" && userRole !== "teacher") {
+      console.warn(`Akses ditolak: Role pengguna saat ini adalah '${userRole}'`);
+      redirect("/");
     }
   }
 
