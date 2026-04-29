@@ -27,17 +27,35 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await userCredential.user.getIdToken();
 
-      // Send token to our API to create a session cookie
+      // Fetch user role from Firestore FIRST
+      const { getDoc, doc } = await import("firebase/firestore");
+      const { db } = await import("@/lib/firebase/config");
+      
+      let userRole = "admin"; // Default
+      try {
+        const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+        if (userDoc.exists() && userDoc.data().role) {
+          userRole = userDoc.data().role;
+        }
+      } catch (dbError) {
+        console.error("Error fetching user role:", dbError);
+      }
+
+      // Send token and role to our API to create a session cookie
       const response = await fetch("/api/auth/session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ idToken, role: userRole }),
       });
 
       if (response.ok) {
-        router.push("/admin");
+        if (userRole === "teacher") {
+          router.push("/dashboard-guru");
+        } else {
+          router.push("/admin");
+        }
         router.refresh();
       } else {
         const data = await response.json();

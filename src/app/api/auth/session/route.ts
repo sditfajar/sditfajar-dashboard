@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 
 export async function POST(request: Request) {
   try {
-    const { idToken } = await request.json();
+    const { idToken, role } = await request.json();
 
     if (!idToken) {
       return NextResponse.json({ error: "Missing ID token" }, { status: 400 });
@@ -33,6 +33,16 @@ export async function POST(request: Request) {
       sameSite: "lax",
     });
 
+    if (role) {
+      cookieStore.set("userRole", role, {
+        maxAge: expiresIn,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        sameSite: "lax",
+      });
+    }
+
     return NextResponse.json({ status: "success" }, { status: 200 });
   } catch (error) {
     console.error("Error creating session cookie:", error);
@@ -44,6 +54,7 @@ export async function DELETE() {
   try {
     const cookieStore = cookies();
     cookieStore.delete("session");
+    cookieStore.delete("userRole");
     
     return NextResponse.json({ status: "success" }, { status: 200 });
   } catch (error) {

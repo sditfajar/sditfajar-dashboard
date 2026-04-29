@@ -32,7 +32,7 @@ export default function AdminPPDBPage() {
     <>
       <FadeIn className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-lg font-semibold md:text-2xl">Manajemen PPDB</h1>
+          <h1 className="text-lg font-semibold md:text-2xl">Output Formulir Website</h1>
           <p className="text-sm text-muted-foreground">
             Kelola data pendaftaran siswa baru tahun ajaran 2026/2027.
           </p>

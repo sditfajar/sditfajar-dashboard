@@ -46,7 +46,7 @@ export const adminLinks: NavItem[] = [
     name: "Manajemen PPDB",
     icon: FileText,
     children: [
-      { name: "Tabel PPDB", href: "/ppdb" },
+      { name: "Formulir Website", href: "/ppdb" },
     ],
   },
   { name: "Pesan Kontak", href: "/pesan", icon: MessageSquare },
@@ -66,7 +66,11 @@ export function Sidebar() {
               height={30}
               className="h-6 w-6 mr-2 object-contain"
             />
-            SDIT Fajar Admin
+            <div className="flex flex-col leading-tight">
+              {/* edited */}
+              <span className="text-[11px] font-normal text-gray-500">Dashboard Admin</span>
+              <span>SDIT Fajar</span>
+            </div>
           </span>
         </Link>
       </div>

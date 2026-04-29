@@ -10,8 +10,8 @@ import { recordTeacherAttendance } from "@/lib/firebase/guru-absensi";
 import { SuccessDialog } from "@/components/ui/success-dialog";
 
 // KOORDINAT SEKOLAH SDIT Fajar
-const SCHOOL_LAT = -6.2591623320842835;
-const SCHOOL_LNG = 106.84379875247629;
+const SCHOOL_LAT = -6.414005026796305;
+const SCHOOL_LNG = 106.8654741102322;
 
 // Diubah ke 0.05 untuk radius 50 Meter
 const MAX_DISTANCE_KM = 0.05;
