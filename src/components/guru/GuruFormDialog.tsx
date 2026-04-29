@@ -36,10 +36,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Nama lengkap wajib diisi"),
   nip: z.string().optional(),
   photoURL: z.string().url("URL Foto tidak valid").optional().or(z.literal("")),
-  gender: z.enum(["L", "P"], {
-    required_error: "Pilih jenis kelamin",
-    invalid_type_error: "Pilih jenis kelamin"
-  }),
+  gender: z.enum(["L", "P"], { message: "Pilih jenis kelamin" }),
   position: z.string().min(1, "Posisi wajib diisi"),
   classTeacher: z.string().optional(),
   subject: z.string().optional(),
