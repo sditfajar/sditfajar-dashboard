@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { adminLinks } from "./Sidebar";
+import { SidebarNav } from "./SidebarNav";
 import { ThemeToggle } from "./ThemeToggle";
 
 import { useRouter } from "next/navigation";
@@ -44,26 +45,9 @@ export function Navbar() {
           <SheetHeader className="text-left mb-4">
             <SheetTitle>Menu Admin</SheetTitle>
           </SheetHeader>
-          <nav className="grid gap-2 text-lg font-medium">
-            {adminLinks.map((link) => {
-              const Icon = link.icon;
-              const isActive = pathname.startsWith(link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground",
-                    isActive ? "bg-muted text-foreground" : ""
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  {link.name}
-                </Link>
-              );
-            })}
-          </nav>
+          <div className="flex-1 overflow-auto py-2">
+            <SidebarNav items={adminLinks} onNavigate={() => setOpen(false)} />
+          </div>
         </SheetContent>
       </Sheet>
       <div className="w-full flex-1">
