@@ -65,7 +65,7 @@ export function SidebarNav({ items, onNavigate }: SidebarNavProps) {
                   {item.children.map((child, childIndex) => {
                     const ChildIcon = child.icon;
                     const isChildActive = child.href
-                      ? pathname.startsWith(child.href)
+                      ? pathname === child.href
                       : false;
 
                     return child.href && !child.disabled ? (

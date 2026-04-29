@@ -9,10 +9,12 @@ import { toast } from "sonner";
 import { recordTeacherAttendance } from "@/lib/firebase/guru-absensi";
 import { SuccessDialog } from "@/components/ui/success-dialog";
 
-// DUMMY KOORDINAT SEKOLAH (Ganti dengan koordinat SDIT Fajar yang sebenarnya)
+// KOORDINAT SEKOLAH SDIT Fajar
 const SCHOOL_LAT = -6.2591623320842835;
 const SCHOOL_LNG = 106.84379875247629;
-const MAX_DISTANCE_KM = 1.0; // 1 Kilometer
+
+// Diubah ke 0.05 untuk radius 50 Meter
+const MAX_DISTANCE_KM = 0.05;
 
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371; // Radius of the earth in km
