@@ -13,6 +13,8 @@ interface SuccessDialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 export function SuccessDialog({
@@ -20,6 +22,8 @@ export function SuccessDialog({
   onOpenChange,
   title,
   description,
+  actionLabel,
+  onAction,
 }: SuccessDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -36,8 +40,17 @@ export function SuccessDialog({
           </div>
         </div>
         <DialogFooter className="sm:justify-center">
-          <Button onClick={() => onOpenChange(false)} className="min-w-[120px]">
-            OK, Mengerti
+          <Button 
+            onClick={() => {
+              if (onAction) {
+                onAction();
+              } else {
+                onOpenChange(false);
+              }
+            }} 
+            className="min-w-[120px]"
+          >
+            {actionLabel || "OK, Mengerti"}
           </Button>
         </DialogFooter>
       </DialogContent>

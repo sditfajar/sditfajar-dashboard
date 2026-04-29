@@ -18,7 +18,7 @@ export default function GuruPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  
+
   const [selectedGuru, setSelectedGuru] = useState<any>(null);
 
   const fetchTeachers = async () => {
@@ -76,7 +76,7 @@ export default function GuruPage() {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Gagal menghapus guru");
-      
+
       toast.success("Data berhasil dihapus");
       fetchTeachers();
     } catch (error: any) {
