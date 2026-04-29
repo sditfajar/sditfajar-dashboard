@@ -36,7 +36,10 @@ const formSchema = z.object({
   name: z.string().min(1, "Nama lengkap wajib diisi"),
   nip: z.string().optional(),
   photoURL: z.string().url("URL Foto tidak valid").optional().or(z.literal("")),
-  gender: z.enum(["L", "P"], { errorMap: () => ({ message: "Pilih jenis kelamin" }) }),
+  gender: z.enum(["L", "P"], {
+    required_error: "Pilih jenis kelamin",
+    invalid_type_error: "Pilih jenis kelamin"
+  }),
   position: z.string().min(1, "Posisi wajib diisi"),
   classTeacher: z.string().optional(),
   subject: z.string().optional(),
@@ -123,7 +126,7 @@ export function GuruFormDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
+
             <FormField
               control={form.control}
               name="name"
