@@ -130,7 +130,7 @@ export function SiswaDataTable({
         </Button>
       </div>
 
-      <div className="rounded-md border">
+      <div className="w-full overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -231,7 +231,7 @@ export function SiswaDataTable({
       </div>
 
       <Dialog open={!!viewSiswa} onOpenChange={(open) => !open && setViewSiswa(null)}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="w-[95%] max-w-lg md:max-w-2xl mx-auto p-4 md:p-6 max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detail Siswa</DialogTitle>
           </DialogHeader>

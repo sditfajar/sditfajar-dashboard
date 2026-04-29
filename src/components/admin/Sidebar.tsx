@@ -32,7 +32,7 @@ export const adminLinks: NavItem[] = [
     icon: UserCog,
     children: [
       { name: "Data Guru", href: "/guru" },
-      { name: "Absensi Guru", disabled: true },
+      { name: "Absensi Guru", href: "/guru/absensi" },
     ],
   },
   {

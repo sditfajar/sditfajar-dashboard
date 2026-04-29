@@ -23,7 +23,7 @@ export function SuccessDialog({
 }: SuccessDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] text-center">
+      <DialogContent className="w-[95%] max-w-sm mx-auto p-4 md:p-6 text-center max-h-[85vh] overflow-y-auto">
         <div className="flex flex-col items-center gap-4 py-6">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
             <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
