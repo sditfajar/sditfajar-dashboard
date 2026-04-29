@@ -50,12 +50,12 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
     const cookieStore = cookies();
     cookieStore.delete("session");
     cookieStore.delete("userRole");
-    
+
     return NextResponse.json({ status: "success" }, { status: 200 });
   } catch (error) {
     console.error("Error deleting session cookie:", error);
