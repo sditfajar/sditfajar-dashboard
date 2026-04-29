@@ -229,7 +229,7 @@ export default function KontenPage() {
 
   return (
     <>
-      <FadeIn className="flex items-center justify-between mb-6">
+      <FadeIn className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-lg font-semibold md:text-2xl">Manajemen Konten</h1>
           <p className="text-sm text-muted-foreground">
@@ -244,7 +244,7 @@ export default function KontenPage() {
         <FadeIn>
           <button
             onClick={() => setIsFormOpen(true)}
-            className="group relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 dark:bg-primary/10 p-8 transition-all hover:border-primary/60 hover:bg-primary/10 dark:hover:bg-primary/20 hover:shadow-lg cursor-pointer w-full h-full min-h-[180px]"
+            className="group relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 dark:bg-primary/10 p-6 sm:p-8 transition-all hover:border-primary/60 hover:bg-primary/10 dark:hover:bg-primary/20 hover:shadow-lg cursor-pointer w-full h-full min-h-[180px]"
           >
             <div className="relative">
               <svg
@@ -266,7 +266,7 @@ export default function KontenPage() {
 
         {/* Info Card - Total Berita */}
         <FadeIn>
-          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-8 h-full min-h-[180px]">
+          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-6 sm:p-8 h-full min-h-[180px]">
             <div className="relative">
               <svg
                 className="h-16 w-16 text-blue-500/60"
@@ -290,7 +290,7 @@ export default function KontenPage() {
 
         {/* Info Card - Status */}
         <FadeIn>
-          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-8 h-full min-h-[180px]">
+          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-6 sm:p-8 h-full min-h-[180px]">
             <div className="relative">
               <svg
                 className="h-16 w-16 text-green-500/60"
@@ -311,8 +311,8 @@ export default function KontenPage() {
       </FadeInStagger>
 
       {/* Tabel Konten */}
-      <FadeIn className="flex flex-col flex-1 rounded-lg border shadow-sm p-4 md:p-6 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm">
-        <div className="overflow-x-auto">
+      <FadeIn className="w-full flex flex-col flex-1 rounded-lg border shadow-sm p-3 sm:p-4 md:p-6 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm overflow-hidden">
+        <div className="w-full overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -378,7 +378,7 @@ export default function KontenPage() {
 
       {/* Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95%] max-w-lg md:max-w-2xl mx-auto p-4 md:p-6 max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Tambah Konten Baru</DialogTitle>
           </DialogHeader>
@@ -523,7 +523,7 @@ export default function KontenPage() {
 
       {/* Preview Dialog (Full-page) */}
       <Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95%] max-w-lg md:max-w-3xl mx-auto p-4 md:p-6 max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl">{previewItem?.judul}</DialogTitle>
             <p className="text-sm text-muted-foreground">

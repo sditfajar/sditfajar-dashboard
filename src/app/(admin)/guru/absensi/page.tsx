@@ -7,7 +7,7 @@ import { FadeIn } from "@/components/ui/fade-in";
 
 export default function AbsensiGuruPage() {
   return (
-    <div className="w-full overflow-x-hidden px-4 md:px-8 space-y-6">
+    <div className="w-full overflow-x-hidden px-0 md:px-6 space-y-6">
       <FadeIn className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-lg font-semibold md:text-2xl">Absensi Geofencing Guru</h1>
@@ -23,11 +23,11 @@ export default function AbsensiGuruPage() {
             <TabsTrigger value="input">Input Absensi</TabsTrigger>
             <TabsTrigger value="laporan">Laporan Absensi</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="input" className="mt-0 outline-none">
             <AbsensiGuruInput />
           </TabsContent>
-          
+
           <TabsContent value="laporan" className="mt-0 outline-none">
             <AbsensiGuruLaporan />
           </TabsContent>
