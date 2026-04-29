@@ -3,12 +3,15 @@ import { SidebarGuru } from "@/components/guru/SidebarGuru";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminAuth } from "@/lib/firebase/admin";
+import type { DecodedIdToken } from "firebase-admin/auth";
 
 export default async function GuruLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Dalam Next.js 14, cookies() bersifat sinkron.
+  // Jika bermigrasi ke Next.js 15 kelak, tambahkan await di depan cookies().
   const cookieStore = cookies();
   const session = cookieStore.get("session")?.value || "";
 
@@ -16,8 +19,8 @@ export default async function GuruLayout({
     redirect("/login");
   }
 
-  // 💡 PERBAIKAN: Tambahkan tipe ': any' agar lolos dari strict type checking Vercel
-  let decodedClaims: any = null;
+  // Menggunakan tipe data spesifik DecodedIdToken alih-alih 'any'
+  let decodedClaims: DecodedIdToken | null = null;
 
   if (!adminAuth) {
     console.warn("Admin Auth is not initialized. Bypassing secure session check for now.");
@@ -26,9 +29,12 @@ export default async function GuruLayout({
       decodedClaims = await adminAuth.verifySessionCookie(session, true);
     } catch (error) {
       console.error("Invalid session cookie:", error);
+      // PENTING: Jangan taruh redirect() di dalam catch() 
+      // karena akan menyebabkan runtime error pada sistem Next.js.
     }
   }
 
+  // Melakukan redirect di luar blok try...catch setelah evaluasi aman
   if (!decodedClaims && adminAuth) {
     redirect("/login");
   }
