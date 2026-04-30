@@ -8,6 +8,7 @@ import {
   Timestamp,
   getDoc,
   setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./config";
 import { Absensi, AbsensiStatus } from "@/types/absensi";
@@ -69,7 +70,8 @@ export const getAbsensiByDate = async (dateStr: string): Promise<Absensi[]> => {
 export const saveAbsensi = async (
   dateStr: string,
   monthYear: string,
-  records: Omit<Absensi, "date" | "attendanceId" | "monthYear">[]
+  records: Omit<Absensi, "date" | "attendanceId" | "monthYear">[],
+  submittedBy: string = "Admin"
 ) => {
   const batch = writeBatch(db);
 
@@ -85,6 +87,8 @@ export const saveAbsensi = async (
       dateString: dateStr,
       monthYear: monthYear,
       date: Timestamp.fromDate(new Date(dateStr)),
+      submittedBy,
+      updatedAt: serverTimestamp(),
     });
   });
 

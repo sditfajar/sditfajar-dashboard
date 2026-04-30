@@ -7,6 +7,7 @@ import {
   addDoc,
   Timestamp,
   orderBy,
+  serverTimestamp
 } from "firebase/firestore";
 import { db } from "./config";
 
@@ -20,7 +21,7 @@ export interface TeacherAttendance {
   longitude: number;
 }
 
-const COLLECTION_NAME = "teacher_attendance";
+const COLLECTION_NAME = "absensi_guru"; // updated collection name as requested
 
 export const recordTeacherAttendance = async (
   teacherName: string,
@@ -30,7 +31,7 @@ export const recordTeacherAttendance = async (
 ) => {
   const attendanceData = {
     teacherName,
-    timestamp: Timestamp.now(),
+    timestamp: serverTimestamp(),
     status: "Hadir",
     distance,
     latitude,
@@ -67,7 +68,7 @@ export const getRekapAbsensiGuru = async (
     return {
       ...data,
       id: doc.id,
-      timestamp: (data.timestamp as Timestamp).toDate(),
+      timestamp: data.timestamp ? (data.timestamp as Timestamp).toDate() : new Date(),
     } as TeacherAttendance;
   });
 };

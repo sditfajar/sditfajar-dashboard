@@ -39,6 +39,9 @@ import {
 } from "@/lib/firebase/absensi";
 import { toast } from "sonner";
 import { SuccessDialog } from "@/components/ui/success-dialog";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase/config";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -60,12 +63,40 @@ export function AbsensiSiswaInput() {
     open: false, title: "", description: "",
   });
   const [selectedClass, setSelectedClass] = useState<string>("Semua");
+  const [guruName, setGuruName] = useState<string>("");
 
   useEffect(() => {
     const savedClass = localStorage.getItem("lastUsedClassGuru");
     if (savedClass) {
       setSelectedClass(savedClass);
     }
+  }, []);
+
+  // Fetch guru name from auth session
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const cachedProfile = sessionStorage.getItem(`profile_${user.uid}`);
+        if (cachedProfile) {
+          const p = JSON.parse(cachedProfile);
+          setGuruName(p.displayName || user.displayName || "Guru");
+        } else {
+          try {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+              const data = userDocSnap.data();
+              setGuruName(data.name || user.displayName || "Guru");
+            } else {
+              setGuruName(user.displayName || "Guru");
+            }
+          } catch {
+            setGuruName(user.displayName || "Guru");
+          }
+        }
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   const handleClassChange = (value: string) => {
@@ -142,7 +173,7 @@ export function AbsensiSiswaInput() {
           dateString: dateStr,
         }));
 
-      await saveAbsensi(dateStr, monthYear, recordsToSave);
+      await saveAbsensi(dateStr, monthYear, recordsToSave, guruName || "Guru");
       setIsLocked(true);
       toast.success("Absensi Tersimpan! ✅", {
         description: `Absensi tanggal ${dateStr} berhasil disimpan untuk ${recordsToSave.length} siswa.`,

@@ -25,31 +25,67 @@ import { Badge } from "@/components/ui/badge";
 import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
 
-import { getRekapAbsensiGuru, TeacherAttendance } from "@/lib/firebase/guru-absensi";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  Timestamp,
+  onSnapshot,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
+import { TeacherAttendance } from "@/lib/firebase/guru-absensi";
+
+const COLLECTION_NAME = "absensi_guru";
 
 export function AbsensiGuruLaporan() {
   const [data, setData] = useState<TeacherAttendance[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchName, setSearchName] = useState("");
   const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(),
     to: new Date(),
   });
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const records = await getRekapAbsensiGuru(date?.from, date?.to);
-      setData(records);
-    } catch (error) {
-      console.error("Gagal memuat rekap absensi guru:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Real-time listener using onSnapshot
   useEffect(() => {
-    loadData();
+    setIsLoading(true);
+
+    let q = query(collection(db, COLLECTION_NAME), orderBy("timestamp", "desc"));
+
+    if (date?.from) {
+      const start = new Date(date.from);
+      start.setHours(0, 0, 0, 0);
+      q = query(q, where("timestamp", ">=", Timestamp.fromDate(start)));
+    }
+
+    if (date?.to) {
+      const end = new Date(date.to);
+      end.setHours(23, 59, 59, 999);
+      q = query(q, where("timestamp", "<=", Timestamp.fromDate(end)));
+    }
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const records: TeacherAttendance[] = snapshot.docs.map((doc) => {
+          const d = doc.data();
+          return {
+            ...d,
+            id: doc.id,
+            timestamp: d.timestamp ? (d.timestamp as Timestamp).toDate() : new Date(),
+          } as TeacherAttendance;
+        });
+        setData(records);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error("Gagal memuat rekap absensi guru:", error);
+        setIsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
   }, [date]);
 
   const toDate = (ts: any): Date => ts instanceof Date ? ts : ts.toDate();
@@ -135,10 +171,15 @@ export function AbsensiGuruLaporan() {
               </PopoverContent>
             </Popover>
           </div>
-          
-          <Button variant="ghost" size="icon" onClick={loadData} disabled={isLoading} title="Refresh Data">
-             <RotateCcw className={cn("h-4 w-4", isLoading && "animate-spin")} />
-          </Button>
+
+          {/* Real-time indicator */}
+          <div className="flex items-center gap-1.5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+            </span>
+            <span className="text-xs text-muted-foreground">Real-time</span>
+          </div>
         </div>
 
         <Button onClick={handleExport} className="gap-2 w-full sm:w-auto" disabled={filteredData.length === 0}>

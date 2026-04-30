@@ -8,13 +8,16 @@ import { MapPin, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { recordTeacherAttendance } from "@/lib/firebase/guru-absensi";
 import { SuccessDialog } from "@/components/ui/success-dialog";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase/config";
 
 // KOORDINAT SEKOLAH SDIT Fajar
 const SCHOOL_LAT = -6.414005026796305;
 const SCHOOL_LNG = 106.8654741102322;
 
-// Diubah ke 0.05 untuk radius 50 Meter
-const MAX_DISTANCE_KM = 0.05;
+// Diubah ke 0.1 untuk radius 100 Meter
+const MAX_DISTANCE_KM = 0.1;
 
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371; // Radius of the earth in km
@@ -42,6 +45,32 @@ export function AbsensiGuruInput() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successPopup, setSuccessPopup] = useState(false);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const cachedProfile = sessionStorage.getItem(`profile_${user.uid}`);
+        if (cachedProfile) {
+          const p = JSON.parse(cachedProfile);
+          setTeacherName(p.displayName);
+        } else {
+          try {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+              const data = userDocSnap.data();
+              setTeacherName(data.name || user.displayName || "Guru");
+            } else {
+              setTeacherName(user.displayName || "Guru");
+            }
+          } catch {
+            setTeacherName(user.displayName || "Guru");
+          }
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   const checkLocation = () => {
     setIsLocating(true);
     setLocationError(null);
@@ -55,7 +84,14 @@ export function AbsensiGuruInput() {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
+        const { latitude, longitude, accuracy } = position.coords;
+        
+        if (accuracy > 100) {
+          setLocationError(`Akurasi lokasi terlalu buruk (${accuracy.toFixed(0)}m). Hindari penggunaan Fake GPS atau cari sinyal lebih baik.`);
+          setIsLocating(false);
+          return;
+        }
+
         setUserLocation({ lat: latitude, lng: longitude });
         const distance = getDistanceFromLatLonInKm(latitude, longitude, SCHOOL_LAT, SCHOOL_LNG);
         setDistanceKm(distance);
@@ -97,7 +133,6 @@ export function AbsensiGuruInput() {
     try {
       await recordTeacherAttendance(teacherName, distanceKm, userLocation.lat, userLocation.lng);
       setSuccessPopup(true);
-      setTeacherName("");
     } catch (error) {
       console.error("Gagal melakukan absensi:", error);
       toast.error("Gagal Absen", { description: "Terjadi kesalahan saat menyimpan data absensi." });
@@ -126,7 +161,7 @@ export function AbsensiGuruInput() {
               placeholder="Masukkan Nama Anda"
               value={teacherName}
               onChange={(e) => setTeacherName(e.target.value)}
-              disabled={isSubmitting}
+              disabled={true} // disabled karena diambil dari auth session
             />
           </div>
 
