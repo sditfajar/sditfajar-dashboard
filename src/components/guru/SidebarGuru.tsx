@@ -10,7 +10,7 @@ export const guruLinks: NavItem[] = [
   { name: "Dashboard Guru", href: "/dashboard-guru", icon: LayoutDashboard },
   { name: "Jadwal Mengajar", href: "#", icon: Calendar, disabled: true },
   { name: "Daftar Siswa", href: "#", icon: Users, disabled: true },
-  { name: "Absensi Kelas", href: "#", icon: ClipboardList, disabled: true },
+  { name: "Absensi Siswa", href: "/absensi-siswa", icon: ClipboardList },
 ];
 
 export function SidebarGuru() {

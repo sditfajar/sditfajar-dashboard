@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { Plus, Trash2, Eye, Newspaper, FileText, Sparkles } from "lucide-react";
+import imageCompression from "browser-image-compression";
+import { Trash2, Eye, Sparkles } from "lucide-react";
 import { KontenBerita } from "@/types/konten";
 import {
   getKontenBerita,
@@ -59,11 +60,18 @@ const formSchema = z.object({
   kontenLengkap: z.string().min(20, "Konten lengkap minimal 20 karakter."),
 });
 
+/** Tipe data untuk parameter addKontenBerita (tanpa id & createdAt). */
+type KontenBeritaInput = Omit<KontenBerita, "id" | "createdAt">;
+
+/** Tahapan proses submit untuk feedback UI pada tombol. */
+type SubmitStage = "idle" | "compressing" | "uploading" | "saving";
+
 export default function KontenPage() {
   const [data, setData] = useState<KontenBerita[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStage, setSubmitStage] = useState<SubmitStage>("idle");
   const [previewItem, setPreviewItem] = useState<KontenBerita | null>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -122,51 +130,23 @@ export default function KontenPage() {
     setPreviewUrl(url);
   };
 
+  /**
+   * Kompresi gambar menggunakan browser-image-compression.
+   * Berjalan di Web Worker agar tidak memblokir UI thread.
+   */
   const compressImage = async (file: File): Promise<File> => {
     if (!file.type.startsWith("image/")) return file;
 
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+    const compressed = await imageCompression(file, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1280,
+      useWebWorker: true,
+    });
 
-        const MAX_WIDTH = 1280;
-        const MAX_HEIGHT = 1280;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        ctx?.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const newFile = new File([blob], file.name, {
-              type: "image/jpeg",
-              lastModified: Date.now(),
-            });
-            resolve(newFile);
-          } else {
-            resolve(file);
-          }
-        }, "image/jpeg", 0.7);
-      };
-      img.onerror = () => resolve(file);
+    // imageCompression mengembalikan Blob; bungkus ulang jadi File
+    return new File([compressed], file.name, {
+      type: compressed.type,
+      lastModified: Date.now(),
     });
   };
 
@@ -176,22 +156,34 @@ export default function KontenPage() {
       let mediaUrl = "";
 
       if (mediaFile) {
-        toast.info("Memproses media, mohon tunggu...");
-        const processedFile = mediaType === "gambar" ? await compressImage(mediaFile) : mediaFile;
-        mediaUrl = await uploadMediaBerita(processedFile);
+        // Tahap 1: Kompresi gambar (jika ada)
+        if (mediaType === "gambar") {
+          setSubmitStage("compressing");
+          toast.info("Mengompres gambar, mohon tunggu...");
+          const compressedFile = await compressImage(mediaFile);
+
+          // Tahap 2: Upload
+          setSubmitStage("uploading");
+          mediaUrl = await uploadMediaBerita(compressedFile);
+        } else {
+          // Video langsung upload tanpa kompresi
+          setSubmitStage("uploading");
+          toast.info("Mengunggah video, mohon tunggu...");
+          mediaUrl = await uploadMediaBerita(mediaFile);
+        }
       }
 
-      const kontenData: any = {
+      // Tahap 3: Simpan ke Firestore
+      setSubmitStage("saving");
+
+      const kontenData: KontenBeritaInput = {
         tanggal: format(values.tanggal, "yyyy-MM-dd"),
         judul: values.judul,
         deskripsiSingkat: values.deskripsiSingkat,
         kontenLengkap: values.kontenLengkap,
         mediaType: mediaFile ? mediaType : "none",
+        ...(mediaUrl !== "" && { mediaUrl }),
       };
-
-      if (mediaUrl !== "") {
-        kontenData.mediaUrl = mediaUrl;
-      }
 
       await addKontenBerita(kontenData);
 
@@ -212,6 +204,7 @@ export default function KontenPage() {
       toast.error("Gagal menambahkan konten.");
     } finally {
       setIsSubmitting(false);
+      setSubmitStage("idle");
     }
   };
 
@@ -513,7 +506,13 @@ export default function KontenPage() {
                   Batal
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Menyimpan..." : "Simpan Konten"}
+                  {submitStage === "compressing"
+                    ? "Mengompres..."
+                    : submitStage === "uploading"
+                      ? "Mengunggah..."
+                      : submitStage === "saving"
+                        ? "Menyimpan..."
+                        : "Simpan Konten"}
                 </Button>
               </DialogFooter>
             </form>
