@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { MapPin, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { MapPin, CheckCircle2, AlertCircle, Loader2, LogIn, LogOut, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { recordTeacherAttendance } from "@/lib/firebase/guru-absensi";
+import { getTodayAttendance, recordAbsenMasuk, recordAbsenPulang } from "@/lib/firebase/guru-absensi";
 import { SuccessDialog } from "@/components/ui/success-dialog";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
 
@@ -16,11 +16,13 @@ import { auth, db } from "@/lib/firebase/config";
 const SCHOOL_LAT = -6.414005026796305;
 const SCHOOL_LNG = 106.8654741102322;
 
-// Diubah ke 0.1 untuk radius 100 Meter
-const MAX_DISTANCE_KM = 0.1;
+// Radius 200 Meter
+const MAX_DISTANCE_KM = 0.2;
+
+type AbsenPhase = "loading" | "masuk" | "pulang" | "selesai";
 
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371; // Radius of the earth in km
+  const R = 6371;
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
   const a =
@@ -28,8 +30,7 @@ function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon
     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c; // Distance in km
-  return d;
+  return R * c;
 }
 
 function deg2rad(deg: number) {
@@ -38,16 +39,23 @@ function deg2rad(deg: number) {
 
 export function AbsensiGuruInput() {
   const [teacherName, setTeacherName] = useState("");
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLocating, setIsLocating] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successPopup, setSuccessPopup] = useState(false);
+  const [successPopup, setSuccessPopup] = useState<{ open: boolean; title: string; description: string }>({
+    open: false, title: "", description: "",
+  });
+  const [phase, setPhase] = useState<AbsenPhase>("loading");
+  const [masukTime, setMasukTime] = useState<Date | null>(null);
 
+  // Fetch user profile from auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        setCurrentUser(user);
         const cachedProfile = sessionStorage.getItem(`profile_${user.uid}`);
         if (cachedProfile) {
           const p = JSON.parse(cachedProfile);
@@ -71,6 +79,37 @@ export function AbsensiGuruInput() {
     return () => unsubscribe();
   }, []);
 
+  // Check today's attendance status on mount + when user is known
+  const checkTodayStatus = useCallback(async (uid: string) => {
+    try {
+      const todayDoc = await getTodayAttendance(uid);
+      if (!todayDoc) {
+        setPhase("masuk");
+      } else if (todayDoc.waktu_masuk && !todayDoc.waktu_pulang) {
+        setPhase("pulang");
+        if (todayDoc.waktu_masuk instanceof Date) {
+          setMasukTime(todayDoc.waktu_masuk);
+        }
+      } else if (todayDoc.waktu_masuk && todayDoc.waktu_pulang) {
+        setPhase("selesai");
+        if (todayDoc.waktu_masuk instanceof Date) {
+          setMasukTime(todayDoc.waktu_masuk);
+        }
+      } else {
+        setPhase("masuk");
+      }
+    } catch (error) {
+      console.error("Error checking today's attendance:", error);
+      setPhase("masuk");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      checkTodayStatus(currentUser.uid);
+    }
+  }, [currentUser, checkTodayStatus]);
+
   const checkLocation = () => {
     setIsLocating(true);
     setLocationError(null);
@@ -85,7 +124,7 @@ export function AbsensiGuruInput() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
-        
+
         if (accuracy > 100) {
           setLocationError(`Akurasi lokasi terlalu buruk (${accuracy.toFixed(0)}m). Hindari penggunaan Fake GPS atau cari sinyal lebih baik.`);
           setIsLocating(false);
@@ -114,6 +153,11 @@ export function AbsensiGuruInput() {
   }, []);
 
   const handleAbsen = async () => {
+    if (!currentUser) {
+      toast.error("Sesi Login Tidak Ditemukan", { description: "Silakan login ulang." });
+      return;
+    }
+
     if (!teacherName.trim()) {
       toast.error("Nama Harus Diisi", { description: "Silakan masukkan nama Anda sebelum absen." });
       return;
@@ -125,14 +169,30 @@ export function AbsensiGuruInput() {
     }
 
     if (distanceKm > MAX_DISTANCE_KM) {
-      toast.error("Di Luar Jangkauan", { description: `Anda berada di luar radius sekolah (${distanceKm.toFixed(2)} km).` });
+      toast.error("Di Luar Jangkauan", { description: `Anda berada di luar radius sekolah (${(distanceKm * 1000).toFixed(0)}m).` });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await recordTeacherAttendance(teacherName, distanceKm, userLocation.lat, userLocation.lng);
-      setSuccessPopup(true);
+      if (phase === "masuk") {
+        await recordAbsenMasuk(currentUser.uid, teacherName, distanceKm, userLocation.lat, userLocation.lng);
+        setPhase("pulang");
+        setMasukTime(new Date());
+        setSuccessPopup({
+          open: true,
+          title: "Absen Masuk Berhasil! 🟢",
+          description: "Waktu masuk Anda telah tercatat. Jangan lupa absen pulang nanti.",
+        });
+      } else if (phase === "pulang") {
+        await recordAbsenPulang(currentUser.uid);
+        setPhase("selesai");
+        setSuccessPopup({
+          open: true,
+          title: "Absen Pulang Berhasil! 🔵",
+          description: "Absensi hari ini sudah lengkap. Terima kasih!",
+        });
+      }
     } catch (error) {
       console.error("Gagal melakukan absensi:", error);
       toast.error("Gagal Absen", { description: "Terjadi kesalahan saat menyimpan data absensi." });
@@ -142,7 +202,25 @@ export function AbsensiGuruInput() {
   };
 
   const isOutOfRange = distanceKm !== null && distanceKm > MAX_DISTANCE_KM;
-  const isButtonDisabled = isLocating || !!locationError || isOutOfRange || isSubmitting;
+  const isComplete = phase === "selesai";
+  const isButtonDisabled = isLocating || !!locationError || isOutOfRange || isSubmitting || isComplete || phase === "loading";
+
+  const getButtonText = () => {
+    if (isSubmitting) return "Menyimpan...";
+    if (phase === "loading") return "Memeriksa status...";
+    if (isOutOfRange) return "Di Luar Jangkauan";
+    if (phase === "masuk") return "Absen Masuk";
+    if (phase === "pulang") return "Absen Pulang";
+    if (phase === "selesai") return "Sudah Absen Lengkap Hari Ini";
+    return "Absen";
+  };
+
+  const getButtonIcon = () => {
+    if (phase === "masuk") return <LogIn className="w-4 h-4 mr-2" />;
+    if (phase === "pulang") return <LogOut className="w-4 h-4 mr-2" />;
+    if (phase === "selesai") return <ShieldCheck className="w-4 h-4 mr-2" />;
+    return null;
+  };
 
   return (
     <>
@@ -158,12 +236,34 @@ export function AbsensiGuruInput() {
           <div className="space-y-2">
             <label className="text-sm font-medium">Nama / ID Guru</label>
             <Input
-              placeholder="Masukkan Nama Anda"
+              placeholder="Memuat nama..."
               value={teacherName}
               onChange={(e) => setTeacherName(e.target.value)}
-              disabled={true} // disabled karena diambil dari auth session
+              disabled={true}
             />
           </div>
+
+          {/* Status Absen Hari Ini */}
+          {phase !== "loading" && (
+            <div className="rounded-lg border p-3 bg-muted/20">
+              <h4 className="text-sm font-medium mb-2">Status Absen Hari Ini</h4>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <span className={`inline-block w-2.5 h-2.5 rounded-full ${phase === "masuk" ? "bg-gray-300" : "bg-green-500"}`} />
+                  <span className="text-xs text-muted-foreground">
+                    Masuk {masukTime ? `(${masukTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })})` : "—"}
+                  </span>
+                </div>
+                <span className="text-muted-foreground text-xs">•</span>
+                <div className="flex items-center gap-1.5">
+                  <span className={`inline-block w-2.5 h-2.5 rounded-full ${phase === "selesai" ? "bg-blue-500" : "bg-gray-300"}`} />
+                  <span className="text-xs text-muted-foreground">
+                    Pulang {phase === "selesai" ? "✓" : "—"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="rounded-lg border p-4 bg-muted/30">
             <h4 className="text-sm font-medium mb-3">Status Lokasi</h4>
@@ -187,11 +287,11 @@ export function AbsensiGuruInput() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Jarak dari Sekolah:</span>
-                  <span className="font-medium">{distanceKm.toFixed(2)} km</span>
+                  <span className="font-medium">{(distanceKm * 1000).toFixed(0)} meter</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Batas Maksimal:</span>
-                  <span className="font-medium">{MAX_DISTANCE_KM} km</span>
+                  <span className="font-medium">{MAX_DISTANCE_KM * 1000} meter</span>
                 </div>
 
                 {isOutOfRange ? (
@@ -217,21 +317,23 @@ export function AbsensiGuruInput() {
         </CardContent>
         <CardFooter>
           <Button
-            className="w-full"
+            className={`w-full ${isComplete ? "opacity-50 cursor-not-allowed" : ""}`}
             size="lg"
             disabled={isButtonDisabled}
             onClick={handleAbsen}
+            variant={phase === "pulang" ? "outline" : "default"}
           >
-            {isSubmitting ? "Menyimpan..." : isOutOfRange ? "Di Luar Jangkauan" : "Absen Hadir"}
+            {getButtonIcon()}
+            {getButtonText()}
           </Button>
         </CardFooter>
       </Card>
 
       <SuccessDialog
-        open={successPopup}
-        onOpenChange={setSuccessPopup}
-        title="Absensi Berhasil!"
-        description="Data kehadiran Anda telah tercatat ke dalam sistem."
+        open={successPopup.open}
+        onOpenChange={(open) => setSuccessPopup((prev) => ({ ...prev, open }))}
+        title={successPopup.title}
+        description={successPopup.description}
       />
     </>
   );

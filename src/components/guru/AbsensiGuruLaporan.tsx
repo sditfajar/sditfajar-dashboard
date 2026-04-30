@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Calendar as CalendarIcon, Download, Search, Loader2, RotateCcw } from "lucide-react";
+import { Calendar as CalendarIcon, Download, Search, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -68,12 +68,14 @@ export function AbsensiGuruLaporan() {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const records: TeacherAttendance[] = snapshot.docs.map((doc) => {
-          const d = doc.data();
+        const records: TeacherAttendance[] = snapshot.docs.map((docSnap) => {
+          const d = docSnap.data();
           return {
             ...d,
-            id: doc.id,
+            id: docSnap.id,
             timestamp: d.timestamp ? (d.timestamp as Timestamp).toDate() : new Date(),
+            waktu_masuk: d.waktu_masuk ? (d.waktu_masuk as Timestamp).toDate() : null,
+            waktu_pulang: d.waktu_pulang ? (d.waktu_pulang as Timestamp).toDate() : null,
           } as TeacherAttendance;
         });
         setData(records);
@@ -88,12 +90,23 @@ export function AbsensiGuruLaporan() {
     return () => unsubscribe();
   }, [date]);
 
-  const toDate = (ts: any): Date => ts instanceof Date ? ts : ts.toDate();
+  const toDate = (ts: any): Date => {
+    if (!ts) return new Date();
+    return ts instanceof Date ? ts : ts.toDate();
+  };
+
+  const formatTime = (ts: any): string => {
+    if (!ts) return "—";
+    const d = toDate(ts);
+    return format(d, "HH:mm:ss", { locale: id });
+  };
 
   const handleExport = () => {
     const excelData = filteredData.map((row) => ({
-      "Waktu Absen": format(toDate(row.timestamp), "dd MMM yyyy HH:mm:ss", { locale: id }),
+      "Tanggal": format(toDate(row.timestamp), "dd MMM yyyy", { locale: id }),
       "Nama Guru": row.teacherName,
+      "Jam Masuk": formatTime(row.waktu_masuk),
+      "Jam Pulang": formatTime(row.waktu_pulang),
       "Status": row.status,
       "Jarak (km)": row.distance.toFixed(3),
       "Lokasi (Lat, Lng)": `${row.latitude}, ${row.longitude}`,
@@ -193,17 +206,19 @@ export function AbsensiGuruLaporan() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[180px]">Waktu Absen</TableHead>
-                <TableHead className="min-w-[200px]">Nama Guru</TableHead>
+                <TableHead className="min-w-[140px]">Tanggal</TableHead>
+                <TableHead className="min-w-[180px]">Nama Guru</TableHead>
+                <TableHead className="min-w-[100px]">Jam Masuk</TableHead>
+                <TableHead className="min-w-[100px]">Jam Pulang</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Jarak dari Sekolah</TableHead>
+                <TableHead>Jarak</TableHead>
                 <TableHead className="text-right">Aksi Peta</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-40 text-center">
+                  <TableCell colSpan={7} className="h-40 text-center">
                     <div className="flex flex-col items-center justify-center space-y-4 text-muted-foreground">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       <p className="text-sm font-medium animate-pulse">Memuat laporan absensi...</p>
@@ -212,45 +227,74 @@ export function AbsensiGuruLaporan() {
                 </TableRow>
               ) : filteredData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                     Tidak ada data absensi guru pada rentang tanggal tersebut.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredData.map((row) => {
                   const dateObj = toDate(row.timestamp);
+                  const hasMasuk = !!row.waktu_masuk;
+                  const hasPulang = !!row.waktu_pulang;
+
                   return (
-                  <TableRow key={row.id}>
-                    <TableCell className="font-medium whitespace-nowrap">
-                      {format(dateObj, "dd MMM yyyy", { locale: id })} <br/>
-                      <span className="text-muted-foreground text-xs">{format(dateObj, "HH:mm:ss", { locale: id })} WIB</span>
-                    </TableCell>
-                    <TableCell>{row.teacherName}</TableCell>
-                    <TableCell>
-                      <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">
-                        {row.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className={cn(
-                        "font-medium", 
-                        row.distance <= 1.0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                      )}>
-                        {row.distance.toFixed(3)} km
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <a 
-                        href={`https://www.google.com/maps/search/?api=1&query=${row.latitude},${row.longitude}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="text-blue-600 hover:underline text-sm font-medium"
-                      >
-                        Lihat Peta
-                      </a>
-                    </TableCell>
-                  </TableRow>
-                )})
+                    <TableRow key={row.id}>
+                      <TableCell className="font-medium whitespace-nowrap">
+                        {format(dateObj, "dd MMM yyyy", { locale: id })}
+                      </TableCell>
+                      <TableCell>{row.teacherName}</TableCell>
+                      <TableCell>
+                        {hasMasuk ? (
+                          <span className="text-green-600 dark:text-green-400 font-medium">
+                            {formatTime(row.waktu_masuk)} <span className="text-muted-foreground font-normal text-xs">WIB</span>
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {hasPulang ? (
+                          <span className="text-blue-600 dark:text-blue-400 font-medium">
+                            {formatTime(row.waktu_pulang)} <span className="text-muted-foreground font-normal text-xs">WIB</span>
+                          </span>
+                        ) : (
+                          <span className="text-amber-500 text-sm font-medium">Belum Pulang</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="default"
+                          className={cn(
+                            "text-white",
+                            hasMasuk && hasPulang
+                              ? "bg-green-500 hover:bg-green-600"
+                              : "bg-amber-500 hover:bg-amber-600"
+                          )}
+                        >
+                          {hasMasuk && hasPulang ? "Lengkap" : "Masuk"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className={cn(
+                          "font-medium", 
+                          row.distance <= 0.1 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                        )}>
+                          {(row.distance * 1000).toFixed(0)}m
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <a 
+                          href={`https://www.google.com/maps/search/?api=1&query=${row.latitude},${row.longitude}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-blue-600 hover:underline text-sm font-medium"
+                        >
+                          Lihat Peta
+                        </a>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
