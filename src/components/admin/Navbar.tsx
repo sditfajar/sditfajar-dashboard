@@ -40,7 +40,7 @@ export function Navbar({ isGuruMode = false }: NavbarProps) {
   };
 
   return (
-    <header className="flex h-14 w-full items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 overflow-hidden">
+    <header className="flex h-14 w-full items-center gap-3 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -49,8 +49,8 @@ export function Navbar({ isGuruMode = false }: NavbarProps) {
           </Button>
         </SheetTrigger>
 
-        <SheetContent side="left" className="flex flex-col w-[70vw] sm:w-[300px]">
-          <SheetHeader className="text-left mb-4">
+        <SheetContent side="left" className="flex flex-col w-[80vw] sm:w-[300px] p-0">
+          <SheetHeader className="text-left p-6 pb-2">
             <Link href={isGuruMode ? "/dashboard-guru" : "/admin"} onClick={() => setOpen(false)} className="flex items-center gap-3">
               <Image
                 src="/favicon.png"
@@ -63,26 +63,42 @@ export function Navbar({ isGuruMode = false }: NavbarProps) {
                 <span className="text-[11px] font-normal text-gray-500 leading-tight">
                   {isGuruMode ? "Portal Guru" : "Dashboard Admin"}
                 </span>
-                <SheetTitle className="leading-tight mt-0">SDIT Fajar</SheetTitle>
+                <SheetTitle className="leading-tight mt-0 text-base">SDIT Fajar</SheetTitle>
               </div>
             </Link>
           </SheetHeader>
 
-          <div className="flex-1 overflow-auto py-2">
+          <div className="flex-1 overflow-y-auto px-4 py-2">
             <SidebarNav items={isGuruMode ? guruLinks : adminLinks} onNavigate={() => setOpen(false)} />
           </div>
-          <div className="-mx-6">
+          <div className="mt-auto border-t">
             <SidebarProfile />
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Mobile Title (Hidden on md and up) */}
+      <div className="flex items-center gap-2 md:hidden">
+        <Image
+          src="/favicon.png"
+          alt="Logo SDIT Fajar"
+          width={28}
+          height={28}
+          className="rounded-md"
+        />
+        <span className="font-semibold text-sm truncate max-w-[120px] sm:max-w-[200px]">
+          {isGuruMode ? "Portal Guru" : "Admin SDIT Fajar"}
+        </span>
+      </div>
+
       <div className="flex-1">
         {/* Placeholder for Search or other topbar actions */}
       </div>
+
       <div className="flex items-center gap-2">
         <ThemeToggle />
-        <Button variant="ghost" size="icon" className="rounded-full" onClick={handleLogout}>
-          <LogOut className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="rounded-full shrink-0" onClick={handleLogout}>
+          <LogOut className="h-5 w-5 text-muted-foreground hover:text-foreground" />
           <span className="sr-only">Logout</span>
         </Button>
       </div>

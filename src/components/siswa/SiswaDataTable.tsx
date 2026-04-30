@@ -26,7 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { MoreHorizontal, Edit, Trash2, Search, Plus, Filter, Eye } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Search, Plus, Filter, Eye, X } from "lucide-react";
 import { Siswa } from "@/types/siswa";
 import {
   Select,
@@ -104,10 +104,19 @@ export function SiswaDataTable({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Cari Nama atau NISN..."
-              className="pl-8"
+              className="pl-8 pr-8"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-0 top-0 h-full px-3 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                type="button"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
           <Select value={filterKelas} onValueChange={setFilterKelas}>
             <SelectTrigger className="w-full sm:w-[160px]">

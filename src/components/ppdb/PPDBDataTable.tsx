@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { FileText, ExternalLink, Loader2, Search } from "lucide-react";
+import { FileText, ExternalLink, Loader2, Search, X } from "lucide-react";
 import { CalonSiswa, PPDBStatus } from "@/types/ppdb";
 import { updatePPDBStatus } from "@/lib/firebase/ppdb";
 import { Button } from "@/components/ui/button";
@@ -87,10 +87,19 @@ export function PPDBDataTable({ data, isLoading, onRefresh }: PPDBDataTableProps
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Cari nama calon siswa..."
-            className="pl-8"
+            className="pl-8 pr-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-0 top-0 h-full px-3 flex items-center justify-center text-muted-foreground hover:text-foreground"
+              type="button"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 

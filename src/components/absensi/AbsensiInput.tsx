@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, isToday as checkIsToday } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,8 @@ export function AbsensiInput() {
     open: false, title: "", description: "",
   });
   const [selectedClass, setSelectedClass] = useState<string>("Semua");
+  const [hasData, setHasData] = useState(false);
+  const [forceInputWeekend, setForceInputWeekend] = useState(false);
 
   useEffect(() => {
     const savedClass = localStorage.getItem("lastUsedClass");
@@ -93,12 +95,15 @@ export function AbsensiInput() {
       const activeSiswa = await getActiveSiswa();
       const dateStr = formatDateOnly(selectedDate);
       const existingAbsensi = await getAbsensiByDate(dateStr);
+      setHasData(existingAbsensi.length > 0);
+      setForceInputWeekend(false);
 
       const merged: SiswaWithAbsensi[] = activeSiswa.map((siswa) => {
         const abs = existingAbsensi.find((a) => a.studentId === siswa.nisn);
         return {
           ...siswa,
           absensiStatus: abs ? abs.status : "Hadir",
+          submittedBy: abs?.submittedBy,
         };
       });
 
@@ -153,6 +158,7 @@ export function AbsensiInput() {
   };
 
   const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+  const isToday = checkIsToday(date);
 
   const displayedClasses = selectedClass === "Semua" 
     ? classes 
@@ -207,16 +213,19 @@ export function AbsensiInput() {
             </div>
           </div>
 
-          <Button className="hidden md:inline-flex" onClick={handleSave} disabled={isSaving || isWeekend}>
+          <Button className="hidden md:inline-flex" onClick={handleSave} disabled={isSaving || !isToday}>
             {isSaving ? "Menyimpan..." : "Simpan Absensi"}
           </Button>
         </div>
 
-      {isWeekend ? (
-        <div className="p-8 text-center border rounded-lg bg-muted/50">
+      {isWeekend && !hasData && !forceInputWeekend ? (
+        <div className="p-8 text-center border rounded-lg bg-muted/50 space-y-4">
           <p className="text-muted-foreground">
-            Hari Libur - Tidak ada jadwal absensi
+            Hari Libur - Secara default tidak ada jadwal absensi.
           </p>
+          <Button variant="outline" onClick={() => setForceInputWeekend(true)}>
+            Input Manual Absen Ekskul
+          </Button>
         </div>
       ) : isLoading ? (
         <div className="p-16 flex flex-col items-center justify-center space-y-4 text-muted-foreground border rounded-lg bg-muted/20">
@@ -256,6 +265,7 @@ export function AbsensiInput() {
                               onValueChange={(val) =>
                                 handleStatusChange(siswa.nisn, val as AbsensiStatus)
                               }
+                              disabled={!isToday}
                             >
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="Hadir" id={`H-${siswa.nisn}`} />
@@ -281,6 +291,7 @@ export function AbsensiInput() {
                             <Select 
                               value={siswa.absensiStatus} 
                               onValueChange={(val) => handleStatusChange(siswa.nisn, val as AbsensiStatus)}
+                              disabled={!isToday}
                             >
                               <SelectTrigger className={cn("w-[110px]", getStatusColor(siswa.absensiStatus))}>
                                 <SelectValue placeholder="Status" />
@@ -293,6 +304,11 @@ export function AbsensiInput() {
                               </SelectContent>
                             </Select>
                           </div>
+                          {siswa.submittedBy && (
+                            <div className="text-xs text-gray-500 opacity-75 mt-2 md:mt-1">
+                              Diinput oleh: {siswa.submittedBy}
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

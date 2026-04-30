@@ -12,12 +12,16 @@ export interface Absensi {
   date: Timestamp | Date;
   dateString: string; // Format: YYYY-MM-DD
   monthYear: string; // Format: MM-YYYY
+  submittedBy?: string;
+  keterangan?: string;
 }
 
 // Untuk UI Input
 export interface SiswaWithAbsensi extends Siswa {
   absensiStatus: AbsensiStatus;
   attendanceId?: string;
+  submittedBy?: string;
+  keterangan?: string;
 }
 
 // Untuk UI Laporan

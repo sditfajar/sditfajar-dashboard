@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, isToday as checkIsToday, isBefore, startOfToday } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -63,12 +72,20 @@ export function AbsensiSiswaInput() {
     open: false, title: "", description: "",
   });
   const [selectedClass, setSelectedClass] = useState<string>("Semua");
+  const [hasData, setHasData] = useState(false);
+  const [forceInputWeekend, setForceInputWeekend] = useState(false);
   const [guruName, setGuruName] = useState<string>("");
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [keterangan, setKeterangan] = useState("");
 
   useEffect(() => {
-    const savedClass = localStorage.getItem("lastUsedClassGuru");
+    const savedClass = localStorage.getItem("last_selected_class");
     if (savedClass) {
       setSelectedClass(savedClass);
+    } else {
+      // Kunjungan pertama: default ke kelas pertama yang tersedia
+      setSelectedClass("1A");
+      localStorage.setItem("last_selected_class", "1A");
     }
   }, []);
 
@@ -101,7 +118,7 @@ export function AbsensiSiswaInput() {
 
   const handleClassChange = (value: string) => {
     setSelectedClass(value);
-    localStorage.setItem("lastUsedClassGuru", value);
+    localStorage.setItem("last_selected_class", value);
   };
 
   // Group by class
@@ -125,6 +142,8 @@ export function AbsensiSiswaInput() {
       const activeSiswa = await getActiveSiswa();
       const dateStr = formatDateOnly(selectedDate);
       const existingAbsensi = await getAbsensiByDate(dateStr);
+      setHasData(existingAbsensi.length > 0);
+      setForceInputWeekend(false);
 
       if (existingAbsensi.length > 0) {
         setIsLocked(true);
@@ -137,6 +156,7 @@ export function AbsensiSiswaInput() {
         return {
           ...siswa,
           absensiStatus: abs ? abs.status : "Hadir",
+          submittedBy: abs?.submittedBy,
         };
       });
 
@@ -156,7 +176,11 @@ export function AbsensiSiswaInput() {
     );
   };
 
-  const handleSave = async () => {
+  const handleSaveClick = () => {
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmSave = async () => {
     if (isLocked) return;
     setIsSaving(true);
     try {
@@ -171,10 +195,13 @@ export function AbsensiSiswaInput() {
           kelas: s.kelas,
           status: s.absensiStatus,
           dateString: dateStr,
+          keterangan: keterangan,
         }));
 
       await saveAbsensi(dateStr, monthYear, recordsToSave, guruName || "Guru");
       setIsLocked(true);
+      setIsConfirmOpen(false);
+      setKeterangan("");
       toast.success("Absensi Tersimpan! ✅", {
         description: `Absensi tanggal ${dateStr} berhasil disimpan untuk ${recordsToSave.length} siswa.`,
       });
@@ -194,6 +221,8 @@ export function AbsensiSiswaInput() {
   };
 
   const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+  const today = startOfToday();
+  const isPastDate = isBefore(date, today);
 
   const displayedClasses = selectedClass === "Semua" 
     ? classes 
@@ -249,8 +278,8 @@ export function AbsensiSiswaInput() {
           </div>
 
           <div className="flex flex-col items-end gap-2">
-            <Button className="hidden md:inline-flex" onClick={handleSave} disabled={isSaving || isWeekend || isLocked}>
-              {isSaving ? "Menyimpan..." : "Simpan Absensi"}
+            <Button className="hidden md:inline-flex" onClick={handleSaveClick} disabled={isSaving || isLocked || isPastDate}>
+              {isSaving ? "Menyimpan..." : (isLocked ? "Terkunci" : "Simpan Absensi")}
             </Button>
             {isLocked && (
               <span className="text-sm text-amber-600 font-medium hidden md:block">
@@ -260,11 +289,14 @@ export function AbsensiSiswaInput() {
           </div>
         </div>
 
-      {isWeekend ? (
-        <div className="p-8 text-center border rounded-lg bg-muted/50">
+      {isWeekend && !hasData && !forceInputWeekend ? (
+        <div className="p-8 text-center border rounded-lg bg-muted/50 space-y-4">
           <p className="text-muted-foreground">
-            Hari Libur - Tidak ada jadwal absensi
+            Hari Libur - Secara default tidak ada jadwal absensi.
           </p>
+          <Button variant="outline" onClick={() => setForceInputWeekend(true)}>
+            Input Manual Absen Ekskul
+          </Button>
         </div>
       ) : isLoading ? (
         <div className="p-16 flex flex-col items-center justify-center space-y-4 text-muted-foreground border rounded-lg bg-muted/20">
@@ -304,23 +336,23 @@ export function AbsensiSiswaInput() {
                               onValueChange={(val) =>
                                 handleStatusChange(siswa.nisn, val as AbsensiStatus)
                               }
-                              disabled={isLocked}
+                              disabled={isLocked || isPastDate}
                             >
                               <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Hadir" id={`H-${siswa.nisn}`} disabled={isLocked} />
-                                <Label htmlFor={`H-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-green-600", isLocked && "opacity-50")}>Hadir</Label>
+                                <RadioGroupItem value="Hadir" id={`H-${siswa.nisn}`} disabled={isLocked || isPastDate} />
+                                <Label htmlFor={`H-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-green-600", (isLocked || isPastDate) && "opacity-50")}>Hadir</Label>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Sakit" id={`S-${siswa.nisn}`} disabled={isLocked} />
-                                <Label htmlFor={`S-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-blue-600", isLocked && "opacity-50")}>Sakit</Label>
+                                <RadioGroupItem value="Sakit" id={`S-${siswa.nisn}`} disabled={isLocked || isPastDate} />
+                                <Label htmlFor={`S-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-blue-600", (isLocked || isPastDate) && "opacity-50")}>Sakit</Label>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Izin" id={`I-${siswa.nisn}`} disabled={isLocked} />
-                                <Label htmlFor={`I-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-yellow-600", isLocked && "opacity-50")}>Izin</Label>
+                                <RadioGroupItem value="Izin" id={`I-${siswa.nisn}`} disabled={isLocked || isPastDate} />
+                                <Label htmlFor={`I-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-yellow-600", (isLocked || isPastDate) && "opacity-50")}>Izin</Label>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Alpa" id={`A-${siswa.nisn}`} disabled={isLocked} />
-                                <Label htmlFor={`A-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-red-600", isLocked && "opacity-50")}>Alpa</Label>
+                                <RadioGroupItem value="Alpa" id={`A-${siswa.nisn}`} disabled={isLocked || isPastDate} />
+                                <Label htmlFor={`A-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-red-600", (isLocked || isPastDate) && "opacity-50")}>Alpa</Label>
                               </div>
                             </RadioGroup>
                           </div>
@@ -328,9 +360,9 @@ export function AbsensiSiswaInput() {
                           {/* Mobile View */}
                           <div className="md:hidden">
                             <Select 
-                              disabled={isLocked}
                               value={siswa.absensiStatus} 
                               onValueChange={(val) => handleStatusChange(siswa.nisn, val as AbsensiStatus)}
+                              disabled={isLocked || isPastDate}
                             >
                               <SelectTrigger className={cn("w-[110px]", getStatusColor(siswa.absensiStatus))}>
                                 <SelectValue placeholder="Status" />
@@ -343,6 +375,11 @@ export function AbsensiSiswaInput() {
                               </SelectContent>
                             </Select>
                           </div>
+                          {siswa.submittedBy && (
+                            <div className="text-xs text-gray-500 opacity-75 mt-2 md:mt-1">
+                              Diinput oleh: {siswa.submittedBy}
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -370,8 +407,8 @@ export function AbsensiSiswaInput() {
                   Data Terkunci (Read-Only)
                 </div>
               )}
-              <Button className="w-full" onClick={handleSave} disabled={isSaving || isWeekend || isLocked}>
-                {isSaving ? "Menyimpan..." : "Simpan Absensi"}
+              <Button className="w-full" onClick={handleSaveClick} disabled={isSaving || isLocked || isPastDate}>
+                {isSaving ? "Menyimpan..." : (isLocked ? "Terkunci" : "Simpan Absensi")}
               </Button>
             </div>
           )}
@@ -385,6 +422,34 @@ export function AbsensiSiswaInput() {
         title={successPopup.title}
         description={successPopup.description}
       />
+
+      {/* Confirmation Dialog with Keterangan */}
+      <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Simpan Absensi</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menyimpan data absensi ini? Data yang sudah dikumpulkan akan terkunci.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="keterangan" className="mb-2 block">Keterangan (Opsional)</Label>
+            <Textarea
+              id="keterangan"
+              placeholder="Contoh: Budi izin karena acara keluarga, Andi sakit demam..."
+              value={keterangan}
+              onChange={(e) => setKeterangan(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfirmOpen(false)} disabled={isSaving}>Batal</Button>
+            <Button onClick={handleConfirmSave} disabled={isSaving}>
+              {isSaving ? "Menyimpan..." : "Kumpulkan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -12,6 +12,7 @@ import {
   ClipboardList,
   MessageSquare,
   Settings,
+  BookOpen,
 } from "lucide-react";
 import { NavItem, SidebarNav } from "./SidebarNav";
 import { SidebarProfile } from "./SidebarProfile";
@@ -41,6 +42,14 @@ export const adminLinks: NavItem[] = [
     icon: Newspaper,
     children: [
       { name: "Konten", href: "/konten" },
+    ],
+  },
+  {
+    name: "Pembelajaran",
+    icon: BookOpen,
+    children: [
+      { name: "Mata Pelajaran", href: "/mapel" },
+      { name: "Jadwal Mengajar", href: "/jadwal" },
     ],
   },
   {

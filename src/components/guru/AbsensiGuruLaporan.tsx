@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Calendar as CalendarIcon, Download, Search, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, Download, Search, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -139,10 +139,19 @@ export function AbsensiGuruLaporan() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Cari Nama Guru..."
-              className="pl-8"
+              className="pl-8 pr-8"
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
             />
+            {searchName && (
+              <button
+                onClick={() => setSearchName("")}
+                className="absolute right-0 top-0 h-full px-3 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                type="button"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           {/* Date Range Picker */}

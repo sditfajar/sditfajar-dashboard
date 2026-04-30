@@ -37,50 +37,35 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, Edit, Trash2, Search, Plus, Filter, Eye, X } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Search, Plus, Filter, X } from "lucide-react";
+import { Subject } from "@/lib/firebase/pembelajaran";
 
-interface GuruDataTableProps {
-  data: any[]; // using any for now, better to define a Teacher interface
-  onEdit: (guru: any) => void;
+interface MapelDataTableProps {
+  data: Subject[];
+  onEdit: (subject: Subject) => void;
   onDelete: (id: string) => void;
   onAdd: () => void;
-  onView: (guru: any) => void;
   isLoading: boolean;
 }
 
-export function GuruDataTable({
+export function MapelDataTable({
   data,
   onEdit,
   onDelete,
   onAdd,
-  onView,
   isLoading,
-}: GuruDataTableProps) {
+}: MapelDataTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterPosisi, setFilterPosisi] = useState<string>("semua");
+  const [filterKelas, setFilterKelas] = useState<string>("semua");
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "Aktif":
-        return "default";
-      case "Cuti":
-        return "secondary";
-      case "Pensiun":
-        return "destructive";
-      default:
-        return "outline";
-    }
-  };
 
   const filteredData = useMemo(() => {
     return data.filter((item) => {
-      const searchLower = searchQuery.toLowerCase();
-      const matchSearch = item.name?.toLowerCase().includes(searchLower) || false;
-      const matchPosisi = filterPosisi === "semua" || item.position === filterPosisi;
-      return matchSearch && matchPosisi;
+      const matchSearch = item.nama_mapel.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchKelas = filterKelas === "semua" || item.kategori_kelas === filterKelas;
+      return matchSearch && matchKelas;
     });
-  }, [data, searchQuery, filterPosisi]);
+  }, [data, searchQuery, filterKelas]);
 
   return (
     <div className="space-y-4">
@@ -89,7 +74,7 @@ export function GuruDataTable({
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Cari Nama Guru..."
+              placeholder="Cari Mata Pelajaran..."
               className="pl-8 pr-8"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -104,23 +89,25 @@ export function GuruDataTable({
               </button>
             )}
           </div>
-          <Select value={filterPosisi} onValueChange={setFilterPosisi}>
+          <Select value={filterKelas} onValueChange={setFilterKelas}>
             <SelectTrigger className="w-full sm:w-[160px]">
               <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="Semua Posisi" />
+              <SelectValue placeholder="Semua Kelas" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="semua">Semua Posisi</SelectItem>
-              <SelectItem value="Guru">Guru</SelectItem>
-              <SelectItem value="Staff">Staff</SelectItem>
-              <SelectItem value="Karyawan">Karyawan</SelectItem>
-              <SelectItem value="Security">Security</SelectItem>
+              <SelectItem value="semua">Semua Kelas</SelectItem>
+              <SelectItem value="1">Kelas 1</SelectItem>
+              <SelectItem value="2">Kelas 2</SelectItem>
+              <SelectItem value="3">Kelas 3</SelectItem>
+              <SelectItem value="4">Kelas 4</SelectItem>
+              <SelectItem value="5">Kelas 5</SelectItem>
+              <SelectItem value="6">Kelas 6</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <Button onClick={onAdd} className="gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
-          Tambah Guru
+          Tambah Mapel
         </Button>
       </div>
 
@@ -129,54 +116,40 @@ export function GuruDataTable({
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px] text-center">No</TableHead>
-              <TableHead>NIP / NUPTK</TableHead>
-              <TableHead>Nama</TableHead>
-              <TableHead className="text-center">L/P</TableHead>
-              <TableHead>Posisi</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Mata Pelajaran</TableHead>
+              <TableHead>Kelas</TableHead>
+              <TableHead>Tipe</TableHead>
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   Loading data...
                 </TableCell>
               </TableRow>
             ) : filteredData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  Tidak ada data guru ditemukan.
+                <TableCell colSpan={5} className="h-24 text-center">
+                  Tidak ada data mapel ditemukan.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredData.map((guru, index) => (
-                <TableRow key={guru.id}>
+              filteredData.map((mapel, index) => (
+                <TableRow key={mapel.id}>
                   <TableCell className="text-center font-medium">{index + 1}</TableCell>
-                  <TableCell>{guru.nip || "-"}</TableCell>
-                  <TableCell>{guru.name}</TableCell>
-                  <TableCell className="text-center">{guru.gender}</TableCell>
-                  <TableCell>{guru.position}</TableCell>
+                  <TableCell className="font-semibold">{mapel.nama_mapel}</TableCell>
                   <TableCell>
-                    <Badge 
-                      variant={getStatusBadgeVariant(guru.status)}
-                      className={guru.status === "Aktif" ? "bg-green-500 hover:bg-green-600 text-white" : ""}
-                    >
-                      {guru.status}
+                    Kelas {mapel.kategori_kelas}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={mapel.tipe === "Umum" ? "default" : "secondary"}>
+                      {mapel.tipe}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
-                        onClick={() => onView(guru)}
-                        title="Lihat Detail"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -186,14 +159,14 @@ export function GuruDataTable({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => onEdit(guru)}>
+                          <DropdownMenuItem onClick={() => onEdit(mapel)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
-                            onClick={() => setItemToDelete(guru.id)}
+                            onClick={() => setItemToDelete(mapel.id || null)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Hapus
@@ -212,9 +185,9 @@ export function GuruDataTable({
       <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
+            <AlertDialogTitle>Hapus Mata Pelajaran?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini tidak dapat dibatalkan. Data guru beserta akun login yang terhubung akan dihapus secara permanen dari sistem.
+              Tindakan ini tidak dapat dibatalkan. Mata pelajaran akan dihapus secara permanen dari sistem.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -222,6 +195,7 @@ export function GuruDataTable({
             <AlertDialogAction 
               onClick={() => {
                 if (itemToDelete) onDelete(itemToDelete);
+                setItemToDelete(null);
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >

@@ -8,7 +8,7 @@ import { SidebarProfile } from "@/components/admin/SidebarProfile";
 
 export const guruLinks: NavItem[] = [
   { name: "Dashboard Guru", href: "/dashboard-guru", icon: LayoutDashboard },
-  { name: "Jadwal Mengajar", href: "#", icon: Calendar, disabled: true },
+  { name: "Jadwal Mengajar", href: "/jadwal-guru", icon: Calendar },
   { name: "Daftar Siswa", href: "#", icon: Users, disabled: true },
   { name: "Absen Kehadiran", href: "/absensi-guru", icon: MapPinCheck },
   { name: "Absensi Siswa", href: "/absensi-siswa", icon: ClipboardList },

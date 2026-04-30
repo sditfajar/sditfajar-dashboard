@@ -88,6 +88,7 @@ export const saveAbsensi = async (
       monthYear: monthYear,
       date: Timestamp.fromDate(new Date(dateStr)),
       submittedBy,
+      keterangan: record.keterangan || "",
       updatedAt: serverTimestamp(),
     });
   });
