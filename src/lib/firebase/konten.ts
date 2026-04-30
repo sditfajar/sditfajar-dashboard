@@ -10,7 +10,7 @@ import {
   serverTimestamp,
   limit,
 } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "./config";
 import { KontenBerita } from "@/types/konten";
 
@@ -21,9 +21,20 @@ export const uploadMediaBerita = async (file: File): Promise<string> => {
   const fileName = `media_berita/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
   const storageRef = ref(storage, fileName);
   
-  const snapshot = await uploadBytesResumable(storageRef, file);
-  const downloadURL = await getDownloadURL(snapshot.ref);
-  return downloadURL;
+  try {
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    return downloadURL;
+  } catch (error: unknown) {
+    const firebaseError = error as { code?: string; message?: string };
+    if (firebaseError.code === "storage/unauthorized") {
+      throw new Error("Akses ditolak oleh Firebase Storage Rules. Hubungi administrator.");
+    }
+    if (firebaseError.code === "storage/canceled") {
+      throw new Error("Upload dibatalkan.");
+    }
+    throw new Error(firebaseError.message || "Gagal mengunggah file ke server.");
+  }
 };
 
 export const addKontenBerita = async (

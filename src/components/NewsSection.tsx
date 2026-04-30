@@ -55,16 +55,35 @@ export function NewsSection() {
       </div>
 
       <div className="container mx-auto px-4 md:px-6 relative z-10">
-        <FadeIn className="flex flex-col items-center justify-center space-y-4 text-center mb-16">
-          <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary mb-2">
-            Update Terbaru
+        <FadeIn className="mb-16 flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
+          {/* Teks: Judul & Deskripsi */}
+          <div className="flex-1 flex flex-col items-center md:items-start space-y-4 text-center md:text-left">
+            <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary mb-2">
+              Update Terbaru
+            </div>
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-tight">
+              Berita & Informasi
+            </h2>
+            <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed">
+              Ikuti perkembangan terbaru, pengumuman, dan prestasi dari SDIT Fajar. Dapatkan informasi terkini seputar kegiatan belajar mengajar dan agenda sekolah kami.
+            </p>
+            <div className="pt-4 hidden md:block">
+              <Button className="rounded-full px-8">Jelajahi Semua Berita</Button>
+            </div>
           </div>
-          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-            Berita & Informasi
-          </h2>
-          <p className="max-w-[700px] text-muted-foreground md:text-xl/relaxed">
-            Ikuti perkembangan terbaru, pengumuman, dan prestasi dari SDIT Fajar.
-          </p>
+
+          {/* Media: YouTube Video Embed */}
+          <div className="flex-1 w-full">
+            <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border border-primary/10 bg-black/5 group">
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src="https://www.youtube.com/embed/dQw4w9WgXcQ" // Placeholder YouTube ID
+                title="Video Profil SDIT Fajar"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+          </div>
         </FadeIn>
 
         {loading ? (
@@ -85,26 +104,13 @@ export function NewsSection() {
                 >
                   <div className="h-2 w-full bg-gradient-to-r from-primary to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 relative" />
                   
-                  {item.mediaUrl && item.mediaType === 'gambar' && (
-                    <div className="w-full h-48 overflow-hidden relative shrink-0">
-                      <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-10" />
-                      <img src={item.mediaUrl} alt={item.judul} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                    </div>
-                  )}
-                  {item.mediaUrl && item.mediaType === 'video' && (
-                    <div className="w-full h-48 overflow-hidden bg-black relative shrink-0">
-                      <video src={item.mediaUrl} autoPlay muted loop playsInline className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  )}
-                  {(!item.mediaUrl || item.mediaType === 'none') && (
-                    <div className="w-full h-48 bg-primary/5 flex items-center justify-center relative overflow-hidden shrink-0">
+                  <div className="w-full h-48 bg-primary/5 flex items-center justify-center relative overflow-hidden shrink-0">
                       <Newspaper className="w-32 h-32 text-primary/10 absolute -right-6 -bottom-6 transform rotate-12 transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6" />
                       <div className="flex flex-col items-center justify-center text-primary/40 z-10">
                         <Newspaper className="w-8 h-8 mb-2 opacity-50" />
                         <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Informasi SDIT</span>
                       </div>
                     </div>
-                  )}
                   
                   <CardHeader className="pt-6">
                     <div className="flex items-center text-sm font-medium text-primary/80 mb-3">
@@ -172,25 +178,7 @@ export function NewsSection() {
               {selectedNews?.judul}
             </h1>
 
-            {selectedNews?.mediaUrl && selectedNews.mediaType === 'gambar' && (
-              <div className="mb-10 rounded-2xl overflow-hidden shadow-lg border border-border/50">
-                <img src={selectedNews.mediaUrl} alt={selectedNews.judul} className="w-full h-auto max-h-[500px] object-cover" />
-              </div>
-            )}
-            {selectedNews?.mediaUrl && selectedNews.mediaType === 'video' && (
-              <div className="mb-10 rounded-2xl overflow-hidden shadow-lg border border-border/50 bg-black">
-                <video src={selectedNews.mediaUrl} controls autoPlay className="w-full h-auto max-h-[500px] object-cover" />
-              </div>
-            )}
-            {(!selectedNews?.mediaUrl || selectedNews?.mediaType === 'none') && (
-              <div className="mb-10 w-full h-64 md:h-[300px] bg-primary/5 rounded-2xl flex items-center justify-center relative overflow-hidden border border-primary/10">
-                <Newspaper className="w-64 h-64 text-primary/5 absolute -right-10 -bottom-10 transform rotate-12" />
-                <div className="flex flex-col items-center justify-center text-primary/30 z-10">
-                  <Newspaper className="w-16 h-16 mb-4 opacity-50" />
-                  <span className="text-sm font-bold uppercase tracking-widest opacity-50">SDIT Fajar</span>
-                </div>
-              </div>
-            )}
+
 
             <div className="mb-10 p-6 bg-muted/50 rounded-2xl border-l-4 border-primary">
               <p className="text-lg font-medium leading-relaxed italic text-foreground/80">

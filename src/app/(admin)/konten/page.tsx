@@ -111,8 +111,8 @@ export default function KontenPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Ukuran file maksimal 10MB");
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Ukuran file maksimal 2MB. Silakan kompres atau pilih file lain.");
       return;
     }
 
@@ -153,27 +153,7 @@ export default function KontenPage() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
-      let mediaUrl = "";
-
-      if (mediaFile) {
-        // Tahap 1: Kompresi gambar (jika ada)
-        if (mediaType === "gambar") {
-          setSubmitStage("compressing");
-          toast.info("Mengompres gambar, mohon tunggu...");
-          const compressedFile = await compressImage(mediaFile);
-
-          // Tahap 2: Upload
-          setSubmitStage("uploading");
-          mediaUrl = await uploadMediaBerita(compressedFile);
-        } else {
-          // Video langsung upload tanpa kompresi
-          setSubmitStage("uploading");
-          toast.info("Mengunggah video, mohon tunggu...");
-          mediaUrl = await uploadMediaBerita(mediaFile);
-        }
-      }
-
-      // Tahap 3: Simpan ke Firestore
+      // Tahap: Simpan ke Firestore
       setSubmitStage("saving");
 
       const kontenData: KontenBeritaInput = {
@@ -181,8 +161,7 @@ export default function KontenPage() {
         judul: values.judul,
         deskripsiSingkat: values.deskripsiSingkat,
         kontenLengkap: values.kontenLengkap,
-        mediaType: mediaFile ? mediaType : "none",
-        ...(mediaUrl !== "" && { mediaUrl }),
+        mediaType: "none",
       };
 
       await addKontenBerita(kontenData);
@@ -194,14 +173,12 @@ export default function KontenPage() {
         description: `"${values.judul}" telah ditambahkan dan akan tampil di halaman utama.`,
       });
       form.reset();
-      setMediaFile(null);
-      setPreviewUrl(null);
-      setMediaType("none");
       setIsFormOpen(false);
       loadData();
-    } catch (error) {
-      console.error(error);
-      toast.error("Gagal menambahkan konten.");
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : "Gagal menambahkan konten.";
+      console.error("Submit konten error:", error);
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
       setSubmitStage("idle");
@@ -464,43 +441,6 @@ export default function KontenPage() {
                   </FormItem>
                 )}
               />
-              <div className="flex flex-col space-y-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Media Pendukung (Opsional)</label>
-                <Input
-                  type="file"
-                  accept="image/*,video/mp4"
-                  onChange={handleFileChange}
-                  className="cursor-pointer file:text-primary file:bg-primary/10 file:border-none file:px-4 file:py-1 file:mr-4 file:rounded-md hover:file:bg-primary/20 transition-colors"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Maksimal 10MB. Format: .jpg, .png, .mp4
-                </p>
-                {previewUrl && (
-                  <div className="mt-4 rounded-xl overflow-hidden border bg-black/5 flex items-center justify-center max-h-48 relative">
-                    {mediaType === "gambar" ? (
-                      <img src={previewUrl} alt="Preview" className="w-full h-full object-contain max-h-48" />
-                    ) : (
-                      <video src={previewUrl} controls className="w-full h-full max-h-48" />
-                    )}
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 h-8 w-8 rounded-full shadow-lg"
-                      onClick={() => {
-                        setMediaFile(null);
-                        setPreviewUrl(null);
-                        setMediaType("none");
-                        // Reset input file value
-                        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-                        if (fileInput) fileInput.value = '';
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                   Batal
@@ -532,12 +472,6 @@ export default function KontenPage() {
             </p>
           </DialogHeader>
           <div className="py-4">
-            {previewItem?.mediaUrl && previewItem.mediaType === "gambar" && (
-              <img src={previewItem.mediaUrl} alt={previewItem.judul} className="w-full h-auto max-h-[400px] object-cover rounded-xl mb-6 shadow-md" />
-            )}
-            {previewItem?.mediaUrl && previewItem.mediaType === "video" && (
-              <video src={previewItem.mediaUrl} controls autoPlay className="w-full h-auto max-h-[400px] object-cover rounded-xl mb-6 shadow-md" />
-            )}
             <p className="text-muted-foreground italic mb-4">
               {previewItem?.deskripsiSingkat}
             </p>
