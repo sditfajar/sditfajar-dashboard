@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Loader2, X, Newspaper } from "lucide-react";
 import { KontenBerita } from "@/types/konten";
-import { getKontenBeritaPublic } from "@/lib/firebase/konten";
+import { getKontenBeritaPublic, getYoutubeEmbedUrl } from "@/lib/firebase/konten";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import {
@@ -22,20 +22,29 @@ export function NewsSection() {
   const [news, setNews] = useState<KontenBerita[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedNews, setSelectedNews] = useState<KontenBerita | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState<string | null>(null);
+  const [youtubeLoading, setYoutubeLoading] = useState(true);
 
   useEffect(() => {
-    const fetchNews = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getKontenBeritaPublic(6);
+        const [data, ytUrl] = await Promise.all([
+          getKontenBeritaPublic(6),
+          getYoutubeEmbedUrl(),
+        ]);
         setNews(data);
+        if (ytUrl) {
+          setYoutubeUrl(ytUrl);
+        }
       } catch (error) {
-        console.error("Error fetching news:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
+        setYoutubeLoading(false);
       }
     };
 
-    fetchNews();
+    fetchData();
   }, []);
 
   const formatDate = (dateStr: string) => {
@@ -75,13 +84,19 @@ export function NewsSection() {
           {/* Media: YouTube Video Embed */}
           <div className="flex-1 w-full">
             <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border border-primary/10 bg-black/5 group">
-              <iframe
-                className="absolute inset-0 w-full h-full"
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ" // Placeholder YouTube ID
-                title="Video Profil SDIT Fajar"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
+              {youtubeLoading ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
+                  <Loader2 className="h-8 w-8 text-primary/40 animate-spin" />
+                </div>
+              ) : (
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src={youtubeUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ"}
+                  title="Video Profil SDIT Fajar"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              )}
             </div>
           </div>
         </FadeIn>

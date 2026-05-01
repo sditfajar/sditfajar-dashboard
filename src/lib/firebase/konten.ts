@@ -9,6 +9,7 @@ import {
   orderBy,
   serverTimestamp,
   limit,
+  setDoc,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "./config";
@@ -92,4 +93,18 @@ export const deleteKontenBerita = async (id: string) => {
   }
   
   await deleteDoc(docRef);
+};
+
+export const setYoutubeEmbedUrl = async (url: string) => {
+  const docRef = doc(db, "pengaturan", "konten_utama");
+  await setDoc(docRef, { youtubeEmbedUrl: url }, { merge: true });
+};
+
+export const getYoutubeEmbedUrl = async (): Promise<string | null> => {
+  const docRef = doc(db, "pengaturan", "konten_utama");
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return docSnap.data().youtubeEmbedUrl || null;
+  }
+  return null;
 };

@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import imageCompression from "browser-image-compression";
-import { Trash2, Eye, Sparkles } from "lucide-react";
+import { Trash2, Eye, Sparkles, Youtube, Save } from "lucide-react";
 import { KontenBerita } from "@/types/konten";
 import {
   getKontenBerita,
   addKontenBerita,
   deleteKontenBerita,
   uploadMediaBerita,
+  setYoutubeEmbedUrl,
+  getYoutubeEmbedUrl,
 } from "@/lib/firebase/konten";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,6 +84,36 @@ export default function KontenPage() {
     description: "",
   });
 
+  // ── YouTube state ────────────────────────────────────────────────────────
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [savedYoutubeUrl, setSavedYoutubeUrl] = useState(
+    "https://www.youtube.com/embed/dQw4w9WgXcQ"
+  );
+  const [isSavingYoutube, setIsSavingYoutube] = useState(false);
+
+  const handleSaveYoutube = async () => {
+    const raw = youtubeUrl.trim();
+    if (!raw) return;
+    // Konversi URL watch ke embed jika perlu
+    let embed = raw;
+    const watchMatch = raw.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/);
+    if (watchMatch) {
+      embed = `https://www.youtube.com/embed/${watchMatch[1]}`;
+    }
+    setIsSavingYoutube(true);
+    try {
+      await setYoutubeEmbedUrl(embed);
+      setSavedYoutubeUrl(embed);
+      setYoutubeUrl("");
+      toast.success("Link YouTube berhasil diperbarui!");
+    } catch (error) {
+      console.error("Failed to save YouTube URL:", error);
+      toast.error("Gagal menyimpan link YouTube.");
+    } finally {
+      setIsSavingYoutube(false);
+    }
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -96,6 +128,11 @@ export default function KontenPage() {
     try {
       const kontenData = await getKontenBerita();
       setData(kontenData);
+      
+      const ytUrl = await getYoutubeEmbedUrl();
+      if (ytUrl) {
+        setSavedYoutubeUrl(ytUrl);
+      }
     } catch (error) {
       console.error("Gagal memuat konten:", error);
     } finally {
@@ -208,80 +245,126 @@ export default function KontenPage() {
         </div>
       </FadeIn>
 
-      {/* Action Grid with SVG Animation */}
-      <FadeInStagger className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        {/* Tambah Konten Card */}
-        <FadeIn>
-          <button
-            onClick={() => setIsFormOpen(true)}
-            className="group relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 dark:bg-primary/10 p-6 sm:p-8 transition-all hover:border-primary/60 hover:bg-primary/10 dark:hover:bg-primary/20 hover:shadow-lg cursor-pointer w-full h-full min-h-[180px]"
-          >
-            <div className="relative">
-              <svg
-                className="h-16 w-16 text-primary/60 group-hover:text-primary transition-colors"
-                viewBox="0 0 64 64"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="2" strokeDasharray="6 4" className="animate-[spin_20s_linear_infinite]" />
-                <path d="M32 20V44M20 32H44" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="group-hover:stroke-[4] transition-all" />
-              </svg>
-              <Sparkles className="absolute -top-1 -right-1 h-5 w-5 text-yellow-500 animate-pulse opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <span className="text-sm font-semibold text-primary/80 group-hover:text-primary transition-colors">
-              Tambah Konten Baru
-            </span>
-          </button>
-        </FadeIn>
+      {/* ── Grid Utama 1 kolom HP / 2 kolom Laptop ─────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
-        {/* Info Card - Total Berita */}
+        {/* ── Kolom Kiri: Action Cards ── */}
+        <FadeInStagger className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-4">
+          {/* Tambah Konten Card */}
+          <FadeIn>
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="group relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 dark:bg-primary/10 p-6 sm:p-8 transition-all hover:border-primary/60 hover:bg-primary/10 dark:hover:bg-primary/20 hover:shadow-lg cursor-pointer w-full h-full min-h-[160px]"
+            >
+              <div className="relative">
+                <svg
+                  className="h-14 w-14 text-primary/60 group-hover:text-primary transition-colors"
+                  viewBox="0 0 64 64"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="2" strokeDasharray="6 4" className="animate-[spin_20s_linear_infinite]" />
+                  <path d="M32 20V44M20 32H44" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="group-hover:stroke-[4] transition-all" />
+                </svg>
+                <Sparkles className="absolute -top-1 -right-1 h-5 w-5 text-yellow-500 animate-pulse opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <span className="text-sm font-semibold text-primary/80 group-hover:text-primary transition-colors">
+                Tambah Konten Baru
+              </span>
+            </button>
+          </FadeIn>
+
+          {/* Info Card - Total Berita */}
+          <FadeIn>
+            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-6 sm:p-8 h-full min-h-[160px]">
+              <div className="relative">
+                <svg className="h-14 w-14 text-blue-500/60" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="10" y="8" width="44" height="48" rx="4" stroke="currentColor" strokeWidth="2" />
+                  <line x1="18" y1="20" x2="46" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-pulse" />
+                  <line x1="18" y1="28" x2="40" y2="28" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-pulse [animation-delay:200ms]" />
+                  <line x1="18" y1="36" x2="36" y2="36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-pulse [animation-delay:400ms]" />
+                  <line x1="18" y1="44" x2="30" y2="44" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-pulse [animation-delay:600ms]" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">{data.length}</p>
+                <span className="text-sm text-muted-foreground">Total Berita</span>
+              </div>
+            </div>
+          </FadeIn>
+
+          {/* Info Card - Status */}
+          <FadeIn>
+            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-6 sm:p-8 h-full min-h-[160px]">
+              <div className="relative">
+                <svg className="h-14 w-14 text-green-500/60" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="2" />
+                  <path d="M20 32L28 40L44 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="animate-[draw_1.5s_ease-in-out_infinite]" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600">Aktif</p>
+                <span className="text-sm text-muted-foreground">Status Sistem</span>
+              </div>
+            </div>
+          </FadeIn>
+        </FadeInStagger>
+
+        {/* ── Kolom Kanan: Form YouTube ── */}
         <FadeIn>
-          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-6 sm:p-8 h-full min-h-[180px]">
-            <div className="relative">
-              <svg
-                className="h-16 w-16 text-blue-500/60"
-                viewBox="0 0 64 64"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+          <div className="rounded-xl border bg-card p-5 space-y-4 h-full">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30">
+                <Youtube className="h-4 w-4 text-red-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-sm">Video Profil YouTube</h2>
+                <p className="text-xs text-muted-foreground">Perbarui link embed video profil sekolah.</p>
+              </div>
+            </div>
+
+            {/* Preview iframe */}
+            <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-muted border">
+              <iframe
+                key={savedYoutubeUrl}
+                className="absolute inset-0 w-full h-full"
+                src={savedYoutubeUrl}
+                title="Video Profil SDIT Fajar"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+
+            {/* Input + Save */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="https://www.youtube.com/watch?v=... atau embed URL"
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                className="flex-1 text-sm"
+              />
+              <Button
+                onClick={handleSaveYoutube}
+                disabled={isSavingYoutube || !youtubeUrl.trim()}
+                className="gap-1.5 shrink-0"
+                size="sm"
               >
-                <rect x="10" y="8" width="44" height="48" rx="4" stroke="currentColor" strokeWidth="2" />
-                <line x1="18" y1="20" x2="46" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-pulse" />
-                <line x1="18" y1="28" x2="40" y2="28" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-pulse [animation-delay:200ms]" />
-                <line x1="18" y1="36" x2="36" y2="36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-pulse [animation-delay:400ms]" />
-                <line x1="18" y1="44" x2="30" y2="44" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-pulse [animation-delay:600ms]" />
-              </svg>
+                <Save className="h-4 w-4" />
+                {isSavingYoutube ? "Menyimpan..." : "Simpan"}
+              </Button>
             </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">{data.length}</p>
-              <span className="text-sm text-muted-foreground">Total Berita</span>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Masukkan link YouTube biasa (watch) atau embed. Perubahan hanya berlaku sementara; tambahkan integrasi Firestore untuk menyimpan permanen.
+            </p>
           </div>
         </FadeIn>
+      </div>
 
-        {/* Info Card - Status */}
-        <FadeIn>
-          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-6 sm:p-8 h-full min-h-[180px]">
-            <div className="relative">
-              <svg
-                className="h-16 w-16 text-green-500/60"
-                viewBox="0 0 64 64"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="2" />
-                <path d="M20 32L28 40L44 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="animate-[draw_1.5s_ease-in-out_infinite]" />
-              </svg>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">Aktif</p>
-              <span className="text-sm text-muted-foreground">Status Sistem</span>
-            </div>
-          </div>
-        </FadeIn>
-      </FadeInStagger>
-
-      {/* Tabel Konten */}
-      <FadeIn className="w-full flex flex-col flex-1 rounded-lg border shadow-sm p-3 sm:p-4 md:p-6 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm overflow-hidden">
+      {/* ── Tabel Konten (scrollable di mobile) ─────────────────────── */}
+      <FadeIn className="w-full rounded-lg border shadow-sm bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm">
+        <div className="p-3 sm:p-4 md:p-6 border-b">
+          <h2 className="font-semibold">Daftar Konten Berita</h2>
+        </div>
         <div className="w-full overflow-x-auto">
           <Table>
             <TableHeader>

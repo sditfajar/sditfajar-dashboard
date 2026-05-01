@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Settings,
   BookOpen,
+  ClipboardEdit,
 } from "lucide-react";
 import { NavItem, SidebarNav } from "./SidebarNav";
 import { SidebarProfile } from "./SidebarProfile";
@@ -68,6 +69,7 @@ export const adminLinks: NavItem[] = [
     ],
   },
   { name: "Pesan Kontak", href: "/pesan", icon: MessageSquare },
+  { name: "Nilai", icon: ClipboardEdit, disabled: true },
   { name: "Setting", icon: Settings, disabled: true },
 ];
 
