@@ -40,7 +40,7 @@ export function Navbar({ isGuruMode = false }: NavbarProps) {
   };
 
   return (
-    <header className="flex h-14 w-full items-center gap-3 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+    <header className="sticky top-0 z-30 flex h-14 w-full items-center gap-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:h-[60px] lg:px-6">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">

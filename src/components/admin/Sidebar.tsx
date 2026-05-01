@@ -38,10 +38,12 @@ export const adminLinks: NavItem[] = [
     ],
   },
   {
-    name: "Manajemen Konten",
-    icon: Newspaper,
+    name: "Keuangan",
+    icon: CreditCard,
     children: [
-      { name: "Konten", href: "/konten" },
+      { name: "SPP Bulanan", href: "/keuangan/spp-bulanan" },
+      { name: "Tagihan Semester", href: "/keuangan/semester" },
+      { name: "Riwayat", href: "/keuangan/riwayat" },
     ],
   },
   {
@@ -57,6 +59,13 @@ export const adminLinks: NavItem[] = [
     icon: FileText,
     children: [
       { name: "Formulir Website", href: "/ppdb" },
+    ],
+  },
+  {
+    name: "Manajemen Konten",
+    icon: Newspaper,
+    children: [
+      { name: "Konten", href: "/konten" },
     ],
   },
   { name: "Pesan Kontak", href: "/pesan", icon: MessageSquare },
