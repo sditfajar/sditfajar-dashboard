@@ -6,7 +6,8 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserCircle } from "lucide-react";
+import { User } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface UserProfile {
   displayName: string;
@@ -89,20 +90,12 @@ export function SidebarProfile() {
 
   return (
     <div className="flex items-center gap-3 p-4 border-t mt-auto bg-muted/20">
-      {profile.photoURL ? (
-        <div className="relative h-10 w-10 rounded-full overflow-hidden border border-border/50 shrink-0">
-          <Image
-            src={profile.photoURL}
-            alt={profile.displayName}
-            fill
-            className="object-cover"
-          />
-        </div>
-      ) : (
-        <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-border/50">
-          <UserCircle className="h-6 w-6" />
-        </div>
-      )}
+      <Avatar className="h-10 w-10 border border-border/50 shrink-0">
+        <AvatarImage src={profile.photoURL || ""} alt={profile.displayName} className="object-cover" />
+        <AvatarFallback className="bg-primary/10 text-primary">
+          <User className="h-5 w-5" />
+        </AvatarFallback>
+      </Avatar>
       <div className="flex flex-col overflow-hidden">
         <span className="text-sm font-medium leading-none truncate mb-1">
           {profile.displayName}

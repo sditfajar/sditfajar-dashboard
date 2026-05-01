@@ -50,6 +50,7 @@ export function AbsensiGuruInput() {
   });
   const [phase, setPhase] = useState<AbsenPhase>("loading");
   const [masukTime, setMasukTime] = useState<Date | null>(null);
+  const [pulangTime, setPulangTime] = useState<Date | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -101,6 +102,9 @@ export function AbsensiGuruInput() {
         setPhase("selesai");
         if (todayDoc.waktu_masuk instanceof Date) {
           setMasukTime(todayDoc.waktu_masuk);
+        }
+        if (todayDoc.waktu_pulang instanceof Date) {
+          setPulangTime(todayDoc.waktu_pulang);
         }
       } else {
         setPhase("masuk");
@@ -194,6 +198,7 @@ export function AbsensiGuruInput() {
       } else if (phase === "pulang") {
         await recordAbsenPulang(currentUser.uid);
         setPhase("selesai");
+        setPulangTime(new Date());
         setSuccessPopup({
           open: true,
           title: "Absen Pulang Berhasil! 🔵",
@@ -316,27 +321,35 @@ export function AbsensiGuruInput() {
             )}
           </div>
           
-          <div className="flex w-full gap-3">
+          <div className="flex flex-col w-full gap-4">
             <Button
-              className={`flex-1 transition-all duration-300 ${phase === "masuk" && !isButtonDisabled ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg" : ""}`}
+              className={`w-full transition-all duration-300 ${phase === "masuk" && !isButtonDisabled ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg" : ""}`}
               size="lg"
               disabled={phase !== "masuk" || isButtonDisabled}
               onClick={handleAbsen}
               variant="default"
             >
               <LogIn className="w-4 h-4 mr-2" />
-              {isSubmitting && phase === "masuk" ? "Menyimpan..." : "Absen Masuk"}
+              {isSubmitting && phase === "masuk" ? "Menyimpan..." : (
+                masukTime 
+                  ? `Masuk - ${masukTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`
+                  : "Absen Masuk"
+              )}
             </Button>
             
             <Button
-              className={`flex-1 transition-all duration-300 ${phase === "pulang" && !isButtonDisabled ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg" : ""}`}
+              className={`w-full transition-all duration-300 ${phase === "pulang" && !isButtonDisabled ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg" : ""}`}
               size="lg"
               disabled={phase !== "pulang" || isButtonDisabled}
               onClick={handleAbsen}
               variant={phase === "pulang" ? "default" : "outline"}
             >
               <LogOut className="w-4 h-4 mr-2" />
-              {isSubmitting && phase === "pulang" ? "Menyimpan..." : "Absen Pulang"}
+              {isSubmitting && phase === "pulang" ? "Menyimpan..." : (
+                pulangTime
+                  ? `Keluar - ${pulangTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`
+                  : "Absen Keluar"
+              )}
             </Button>
           </div>
 

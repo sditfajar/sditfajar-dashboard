@@ -27,15 +27,28 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, User } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const toTitleCase = (str: string) =>
   str.replace(/\b\w/g, (char) => char.toUpperCase());
+
+const getDriveDirectLink = (url: string) => {
+  if (!url) return "";
+  if (url.includes("/file/d/")) {
+    const match = url.match(/\/file\/d\/([^/]+)/);
+    if (match && match[1]) {
+      return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    }
+  }
+  return url;
+};
 
 const formSchema = z.object({
   name: z.string().min(1, "Nama lengkap wajib diisi"),
   nip: z.string().optional(),
   photoURL: z.string().url("URL Foto tidak valid").optional().or(z.literal("")),
+  drivePhotoURL: z.string().optional(),
   gender: z.enum(["L", "P"], { message: "Pilih jenis kelamin" }),
   position: z.string().min(1, "Posisi wajib diisi"),
   classTeacher: z.string().optional(),
@@ -71,6 +84,7 @@ export function GuruFormDialog({
       name: "",
       nip: "",
       photoURL: "",
+      drivePhotoURL: "",
       gender: "L",
       position: "",
       classTeacher: "",
@@ -88,6 +102,7 @@ export function GuruFormDialog({
         name: defaultValues.name || "",
         nip: defaultValues.nip || "",
         photoURL: defaultValues.photoURL || "",
+        drivePhotoURL: defaultValues.photoURL?.includes("drive.google.com") ? defaultValues.photoURL : "",
         gender: defaultValues.gender || "L",
         position: defaultValues.position || "",
         classTeacher: defaultValues.classTeacher || "",
@@ -102,7 +117,14 @@ export function GuruFormDialog({
     }
   }, [open, defaultValues, form]);
 
-  const handleSubmit = async (data: GuruFormValues) => {
+  const handleSubmit = async (values: GuruFormValues) => {
+    const data = { ...values };
+    
+    // Convert Google Drive link if provided
+    if (data.drivePhotoURL) {
+      data.photoURL = getDriveDirectLink(data.drivePhotoURL);
+    }
+    
     if (!isEditing && (!data.password || data.password.length < 6)) {
       form.setError("password", { message: "Password minimal 6 karakter untuk guru baru" });
       return;
@@ -111,6 +133,9 @@ export function GuruFormDialog({
       form.setError("password", { message: "Password minimal 6 karakter" });
       return;
     }
+    
+    // Remove drivePhotoURL before submitting to Firestore if your API doesn't expect it
+    // but here we just pass the modified data
     await onSubmit(data);
     form.reset();
   };
@@ -264,19 +289,54 @@ export function GuruFormDialog({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="photoURL"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Foto Profil (URL)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="md:col-span-2 flex flex-col md:flex-row items-center gap-6 p-4 bg-muted/30 rounded-xl border border-dashed border-primary/20">
+              <Avatar className="h-20 w-20 border-2 border-background shadow-md">
+                <AvatarImage src={form.watch("drivePhotoURL") ? getDriveDirectLink(form.watch("drivePhotoURL")!) : form.watch("photoURL")} className="object-cover" />
+                <AvatarFallback className="bg-primary/5">
+                  <User className="h-10 w-10 text-primary/40" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 space-y-4 w-full">
+                <FormField
+                  control={form.control}
+                  name="drivePhotoURL"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-primary uppercase tracking-wider">Link Foto Google Drive</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="https://drive.google.com/file/d/..." 
+                          {...field} 
+                          className="bg-background"
+                        />
+                      </FormControl>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        * Pastikan akses file diatur ke <strong>"Siapa saja yang memiliki link"</strong>
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex items-center gap-2">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-[10px] text-muted-foreground uppercase font-medium">Atau</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="photoURL"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">URL Foto Langsung (Firebase/Lainnya)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://..." {...field} className="bg-background h-8 text-xs" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             <div className="md:col-span-2 border-t pt-4 mt-2">
               <h4 className="text-sm font-semibold text-muted-foreground mb-4">Akses Login</h4>
@@ -287,7 +347,7 @@ export function GuruFormDialog({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email <br></br>{isEditing && "(Untuk Login di akun Guru)"}</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="guru@sditfajar.com" {...field} />
                   </FormControl>

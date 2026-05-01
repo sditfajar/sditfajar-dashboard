@@ -8,7 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, UserCircle } from "lucide-react";
+import { Eye, EyeOff, User } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import Image from "next/image";
 
 interface GuruDetailDialogProps {
@@ -30,20 +31,12 @@ export function GuruDetailDialog({ open, onOpenChange, guru }: GuruDetailDialogP
         </DialogHeader>
 
         <div className="flex items-center gap-4 mb-4 pb-4 border-b">
-          {guru.photoURL ? (
-            <div className="relative w-16 h-16 rounded-full overflow-hidden border">
-              <Image
-                src={guru.photoURL}
-                alt={guru.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center border">
-              <UserCircle className="w-10 h-10 text-muted-foreground" />
-            </div>
-          )}
+          <Avatar className="w-16 h-16 border shadow-sm">
+            <AvatarImage src={guru.photoURL || ""} alt={guru.name} className="object-cover" />
+            <AvatarFallback className="bg-muted">
+              <User className="w-8 h-8 text-muted-foreground" />
+            </AvatarFallback>
+          </Avatar>
           <div>
             <h3 className="font-semibold text-lg">{guru.name}</h3>
             <p className="text-sm text-muted-foreground">{guru.position} {guru.status === 'Aktif' ? '• Aktif' : `• ${guru.status}`}</p>

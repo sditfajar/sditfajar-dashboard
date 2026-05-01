@@ -133,3 +133,32 @@ export const getRekapAbsensiGuru = async (
     } as TeacherAttendance;
   });
 };
+
+// Get monthly attendance for a specific teacher
+export const getMonthlyAttendance = async (
+  uid: string,
+  date: Date
+): Promise<TeacherAttendance[]> => {
+  const start = new Date(date.getFullYear(), date.getMonth(), 1);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+  
+  const q = query(
+    collection(db, COLLECTION_NAME),
+    where("uid", "==", uid),
+    where("timestamp", ">=", Timestamp.fromDate(start)),
+    where("timestamp", "<=", Timestamp.fromDate(end)),
+    orderBy("timestamp", "asc")
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      ...data,
+      id: d.id,
+      timestamp: data.timestamp ? (data.timestamp as Timestamp).toDate() : new Date(),
+      waktu_masuk: data.waktu_masuk ? (data.waktu_masuk as Timestamp).toDate() : null,
+      waktu_pulang: data.waktu_pulang ? (data.waktu_pulang as Timestamp).toDate() : null,
+    } as TeacherAttendance;
+  });
+};
