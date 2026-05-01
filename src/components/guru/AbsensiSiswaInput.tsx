@@ -253,6 +253,7 @@ export function AbsensiSiswaInput() {
                     mode="single"
                     selected={date}
                     onSelect={(d) => d && setDate(d)}
+                    disabled={(d) => !checkIsToday(d)}
                     initialFocus
                   />
                 </PopoverContent>

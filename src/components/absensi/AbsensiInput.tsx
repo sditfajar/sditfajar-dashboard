@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { format, isToday as checkIsToday } from "date-fns";
+import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,8 @@ import {
 } from "@/lib/firebase/absensi";
 import { toast } from "sonner";
 import { SuccessDialog } from "@/components/ui/success-dialog";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase/config";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -61,6 +63,17 @@ export function AbsensiInput() {
   const [selectedClass, setSelectedClass] = useState<string>("Semua");
   const [hasData, setHasData] = useState(false);
   const [forceInputWeekend, setForceInputWeekend] = useState(false);
+  const [adminEmail, setAdminEmail] = useState<string>("Admin");
+
+  // Fetch admin email from auth session
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setAdminEmail(user.email || "Admin");
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const savedClass = localStorage.getItem("lastUsedClass");
@@ -128,7 +141,13 @@ export function AbsensiInput() {
       const dateStr = formatDateOnly(date);
       const monthYear = formatMonthYear(date);
 
-      const recordsToSave = students
+      // Only save students from the currently displayed/filtered classes
+      const visibleStudents = students.filter((s) => {
+        if (selectedClass === "Semua") return true;
+        return s.kelas === selectedClass;
+      });
+
+      const recordsToSave = visibleStudents
         .filter((s) => s.absensiStatus !== "")
         .map((s) => ({
           studentId: s.nisn,
@@ -138,7 +157,9 @@ export function AbsensiInput() {
           dateString: dateStr,
         }));
 
-      await saveAbsensi(dateStr, monthYear, recordsToSave);
+      const submittedByLabel = `Diedit oleh ${adminEmail}`;
+      await saveAbsensi(dateStr, monthYear, recordsToSave, submittedByLabel);
+      await loadData(date);
       toast.success("Absensi Tersimpan! ✅", {
         description: `Absensi tanggal ${dateStr} berhasil disimpan untuk ${recordsToSave.length} siswa.`,
       });
@@ -158,7 +179,6 @@ export function AbsensiInput() {
   };
 
   const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-  const isToday = checkIsToday(date);
 
   const displayedClasses = selectedClass === "Semua" 
     ? classes 
@@ -213,7 +233,7 @@ export function AbsensiInput() {
             </div>
           </div>
 
-          <Button className="hidden md:inline-flex" onClick={handleSave} disabled={isSaving || !isToday}>
+          <Button className="hidden md:inline-flex" onClick={handleSave} disabled={isSaving}>
             {isSaving ? "Menyimpan..." : "Simpan Absensi"}
           </Button>
         </div>
@@ -265,7 +285,7 @@ export function AbsensiInput() {
                               onValueChange={(val) =>
                                 handleStatusChange(siswa.nisn, val as AbsensiStatus)
                               }
-                              disabled={!isToday}
+                              disabled={false}
                             >
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="Hadir" id={`H-${siswa.nisn}`} />
@@ -291,7 +311,7 @@ export function AbsensiInput() {
                             <Select 
                               value={siswa.absensiStatus} 
                               onValueChange={(val) => handleStatusChange(siswa.nisn, val as AbsensiStatus)}
-                              disabled={!isToday}
+                              disabled={false}
                             >
                               <SelectTrigger className={cn("w-[110px]", getStatusColor(siswa.absensiStatus))}>
                                 <SelectValue placeholder="Status" />
@@ -331,7 +351,7 @@ export function AbsensiInput() {
           {/* Mobile Submit Button at bottom */}
           {displayedClasses.length > 0 && (
             <div className="md:hidden mt-6">
-              <Button className="w-full" onClick={handleSave} disabled={isSaving || isWeekend}>
+              <Button className="w-full" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? "Menyimpan..." : "Simpan Absensi"}
               </Button>
             </div>
