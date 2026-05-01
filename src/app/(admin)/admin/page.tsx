@@ -1,15 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Newspaper, CalendarCheck, Mail, Users, ArrowUpRight, UploadCloud, BarChart3, MessageSquare } from "lucide-react";
+import { CalendarCheck, Mail, ArrowUpRight, UploadCloud, MessageSquare } from "lucide-react";
 import { getKontenBerita } from "@/lib/firebase/konten";
 import { getPesanKontak } from "@/lib/firebase/pesan";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+const BULAN_AKADEMIK = [
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni"
+];
 
 export default function DashboardPage() {
   const [totalKonten, setTotalKonten] = useState(0);
   const [unreadPesan, setUnreadPesan] = useState(0);
+  const [keuanganData, setKeuanganData] = useState<any[]>([]);
 
   useEffect(() => {
     const loadStats = async () => {
@@ -23,7 +33,59 @@ export default function DashboardPage() {
       }
     };
     loadStats();
+
+    // Subscribe to keuangan collection for real-time charts
+    const unsub = onSnapshot(collection(db, "keuangan"), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setKeuanganData(data);
+    });
+
+    return () => unsub();
   }, []);
+
+  const currentMonth = new Date().getMonth();
+  const currentSemester = currentMonth >= 6 ? "Ganjil" : "Genap";
+
+  const sppChartData = useMemo(() => {
+    const counts = BULAN_AKADEMIK.map((bulan) => ({
+      name: bulan.substring(0, 3),
+      total: 0,
+      fullMonthName: bulan
+    }));
+
+    keuanganData.forEach((k) => {
+      k.tagihanBulanan?.forEach((tb: any) => {
+        if (tb.status === "Lunas") {
+          const idx = counts.findIndex((c) => c.fullMonthName === tb.bulan);
+          if (idx !== -1) {
+            counts[idx].total += tb.nominal;
+          }
+        }
+      });
+    });
+
+    return counts;
+  }, [keuanganData]);
+
+  const semesterChartData = useMemo(() => {
+    let lunas = 0;
+    let belumLunas = 0;
+
+    keuanganData.forEach((k) => {
+      const currentSemesterData = k.tagihanSemesteran?.find((ts: any) => ts.semester === currentSemester);
+      if (currentSemesterData) {
+        if (currentSemesterData.status === "Lunas") lunas++;
+        else belumLunas++;
+      } else {
+        belumLunas++;
+      }
+    });
+
+    return [
+      { name: "Lunas", value: lunas, color: "hsl(var(--primary))" },
+      { name: "Belum Lunas", value: belumLunas, color: "hsl(var(--destructive))" }
+    ];
+  }, [keuanganData, currentSemester]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -151,51 +213,71 @@ export default function DashboardPage() {
           </Link>
         </motion.div>
 
-        {/* 4. Custom Chart Animation (Col Span 2) */}
+        {/* 4. Financial Charts */}
         <motion.div variants={itemVariants} className="md:col-span-2 lg:col-span-3">
-          <div className="rounded-3xl bg-card border shadow-sm p-6 sm:p-8 h-full flex flex-col">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h3 className="text-lg font-bold">Tren Pendaftar PPDB</h3>
-                <p className="text-sm text-muted-foreground">Statistik pendaftaran bulanan (Dummy Data)</p>
-              </div>
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <BarChart3 className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-
-            <div className="flex-1 relative min-h-[250px] w-full flex items-end justify-between gap-2 sm:gap-4 pt-10">
-              {/* Background Grid Lines */}
-              <div className="absolute inset-0 flex flex-col justify-between z-0">
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <div key={i} className="w-full h-[1px] bg-border/50" />
-                ))}
-              </div>
-
-              {/* Animated Bars */}
-              {[
-                { month: "Jan", value: 30 },
-                { month: "Feb", value: 45 },
-                { month: "Mar", value: 80 },
-                { month: "Apr", value: 65 },
-                { month: "Mei", value: 100 },
-                { month: "Jun", value: 50 },
-                { month: "Jul", value: 20 },
-              ].map((data, idx) => (
-                <div key={data.month} className="relative flex flex-col items-center justify-end h-full z-10 w-full group">
-                  <div className="absolute -top-8 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0">
-                    {data.value} Siswa
-                  </div>
-                  <motion.div
-                    className="w-full max-w-[40px] bg-gradient-to-t from-primary/50 to-primary rounded-t-md"
-                    initial={{ height: 0 }}
-                    animate={{ height: `${data.value}%` }}
-                    transition={{ duration: 1.5, delay: idx * 0.1, type: "spring", bounce: 0.3 }}
-                  />
-                  <span className="mt-3 text-xs font-medium text-muted-foreground">{data.month}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* SPP Bulanan Chart */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">Tren SPP Bulanan (Lunas)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={sppChartData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.2)" />
+                      <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" />
+                      <YAxis
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        stroke="hsl(var(--muted-foreground))"
+                        tickFormatter={(value) => `Rp${value / 1000}k`}
+                      />
+                      <RechartsTooltip
+                        cursor={{ fill: 'hsl(var(--muted)/0.4)' }}
+                        formatter={(value: any) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(Number(value) || 0)}
+                        labelStyle={{ color: 'black' }}
+                      />
+                      <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
-            </div>
+              </CardContent>
+            </Card>
+
+            {/* Tagihan Semester Chart */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">Rasio Tagihan Semester ({currentSemester})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px] w-full flex justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={semesterChartData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                        outerRadius={100}
+                        dataKey="value"
+                      >
+                        {semesterChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip
+                        formatter={(value: any) => [value + " Siswa"]}
+                        contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))" }}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </motion.div>
       </motion.div>
