@@ -50,6 +50,13 @@ export function AbsensiGuruInput() {
   });
   const [phase, setPhase] = useState<AbsenPhase>("loading");
   const [masukTime, setMasukTime] = useState<Date | null>(null);
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Fetch user profile from auth
   useEffect(() => {
@@ -315,7 +322,14 @@ export function AbsensiGuruInput() {
             ) : null}
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col gap-3">
+          <div className="text-center w-full min-h-[32px] flex items-center justify-center">
+            {currentTime && (
+              <span className="text-2xl font-mono font-bold text-yellow-500 dark:text-yellow-400 animate-pulse tracking-widest drop-shadow-sm">
+                {currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).replace(/\./g, ':')}
+              </span>
+            )}
+          </div>
           <Button
             className={`w-full ${isComplete ? "opacity-50 cursor-not-allowed" : ""}`}
             size="lg"
