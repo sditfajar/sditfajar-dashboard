@@ -128,7 +128,7 @@ export default function KontenPage() {
     try {
       const kontenData = await getKontenBerita();
       setData(kontenData);
-      
+
       const ytUrl = await getYoutubeEmbedUrl();
       if (ytUrl) {
         setSavedYoutubeUrl(ytUrl);
@@ -319,7 +319,7 @@ export default function KontenPage() {
               </div>
               <div>
                 <h2 className="font-semibold text-sm">Video Profil YouTube</h2>
-                <p className="text-xs text-muted-foreground">Perbarui link embed video profil sekolah.</p>
+                <p className="text-xs text-muted-foreground">Perbarui link embed video event/profil sekolah.</p>
               </div>
             </div>
 

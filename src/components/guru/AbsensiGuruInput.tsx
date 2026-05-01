@@ -320,7 +320,7 @@ export function AbsensiGuruInput() {
               </span>
             )}
           </div>
-          
+
           <div className="flex flex-col w-full gap-4">
             <Button
               className={`w-full transition-all duration-300 ${phase === "masuk" && !isButtonDisabled ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg" : ""}`}
@@ -331,12 +331,12 @@ export function AbsensiGuruInput() {
             >
               <LogIn className="w-4 h-4 mr-2" />
               {isSubmitting && phase === "masuk" ? "Menyimpan..." : (
-                masukTime 
+                masukTime
                   ? `Masuk - ${masukTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`
                   : "Absen Masuk"
               )}
             </Button>
-            
+
             <Button
               className={`w-full transition-all duration-300 ${phase === "pulang" && !isButtonDisabled ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg" : ""}`}
               size="lg"

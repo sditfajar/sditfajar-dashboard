@@ -1,100 +1,94 @@
-import {
-  collection,
-  doc,
+import { db } from "./config";
+import { 
+  collection, 
+  doc, 
+  getDoc, 
   getDocs,
-  getDoc,
+  setDoc, 
+  updateDoc, 
   query,
   where,
-  setDoc,
-  updateDoc,
-  Timestamp,
   orderBy,
-  serverTimestamp,
-  FieldValue,
+  serverTimestamp, 
+  Timestamp 
 } from "firebase/firestore";
-import { db } from "./config";
+
+const COLLECTION_NAME = "absensi_guru";
 
 export interface TeacherAttendance {
   id?: string;
-  teacherName: string;
   uid: string;
-  dateString: string; // YYYY-MM-DD
-  waktu_masuk?: Timestamp | Date | FieldValue | null;
-  waktu_pulang?: Timestamp | Date | FieldValue | null;
+  teacherName: string;
+  waktu_masuk: Date | null;
+  waktu_pulang: Date | null;
+  timestamp: Date | Timestamp;
   status: string;
   distance: number;
   latitude: number;
   longitude: number;
-  // Legacy compat
-  timestamp?: Timestamp | Date | null;
+  dateString: string;
 }
 
-const COLLECTION_NAME = "absensi_guru";
-
-// Helper: format date as YYYY-MM-DD
-const formatDateString = (date: Date): string => {
-  const y = date.getFullYear();
-  const m = (date.getMonth() + 1).toString().padStart(2, "0");
-  const d = date.getDate().toString().padStart(2, "0");
-  return `${y}-${m}-${d}`;
-};
-
-// Check today's attendance for a specific user
-export const getTodayAttendance = async (
-  uid: string
-): Promise<TeacherAttendance | null> => {
-  const todayStr = formatDateString(new Date());
-  const docId = `${uid}_${todayStr}`;
+export const getTodayAttendance = async (uid: string) => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
+  
+  const docId = `${uid}_${dateStr}`;
   const docRef = doc(db, COLLECTION_NAME, docId);
   const docSnap = await getDoc(docRef);
 
-  if (!docSnap.exists()) return null;
-
-  const data = docSnap.data();
-  return {
-    ...data,
-    id: docSnap.id,
-    waktu_masuk: data.waktu_masuk ? (data.waktu_masuk as Timestamp).toDate() : null,
-    waktu_pulang: data.waktu_pulang ? (data.waktu_pulang as Timestamp).toDate() : null,
-    timestamp: data.waktu_masuk ? (data.waktu_masuk as Timestamp).toDate() : null,
-  } as TeacherAttendance;
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    return {
+      ...data,
+      waktu_masuk: data.waktu_masuk instanceof Timestamp ? data.waktu_masuk.toDate() : data.waktu_masuk,
+      waktu_pulang: data.waktu_pulang instanceof Timestamp ? data.waktu_pulang.toDate() : data.waktu_pulang,
+      timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : data.timestamp,
+    };
+  }
+  return null;
 };
 
-// Record check-in (Absen Masuk) — creates a new document
 export const recordAbsenMasuk = async (
-  uid: string,
-  teacherName: string,
-  distance: number,
-  latitude: number,
+  uid: string, 
+  teacherName: string, 
+  distance: number, 
+  latitude: number, 
   longitude: number
-): Promise<string> => {
-  const todayStr = formatDateString(new Date());
-  const docId = `${uid}_${todayStr}`;
+) => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
+  
+  const docId = `${uid}_${dateStr}`;
   const docRef = doc(db, COLLECTION_NAME, docId);
 
   await setDoc(docRef, {
     uid,
     teacherName,
-    dateString: todayStr,
     waktu_masuk: serverTimestamp(),
-    waktu_pulang: null,
-    status: "Hadir",
+    timestamp: serverTimestamp(),
     distance,
     latitude,
     longitude,
-    // Keep timestamp for backward compat with ordering/queries
-    timestamp: serverTimestamp(),
+    dateString: dateStr,
+    status: "Hadir"
   });
-
-  return docId;
 };
 
-// Record check-out (Absen Pulang) — updates existing document
-export const recordAbsenPulang = async (
-  uid: string
-): Promise<void> => {
-  const todayStr = formatDateString(new Date());
-  const docId = `${uid}_${todayStr}`;
+export const recordAbsenPulang = async (uid: string) => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
+  
+  const docId = `${uid}_${dateStr}`;
   const docRef = doc(db, COLLECTION_NAME, docId);
 
   await updateDoc(docRef, {
@@ -102,63 +96,27 @@ export const recordAbsenPulang = async (
   });
 };
 
-// Get rekap for admin report
-export const getRekapAbsensiGuru = async (
-  startDate?: Date,
-  endDate?: Date
-): Promise<TeacherAttendance[]> => {
-  let q = query(collection(db, COLLECTION_NAME), orderBy("timestamp", "desc"));
+export const getMonthlyAttendance = async (uid: string, monthDate: Date) => {
+  const startOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const endOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0, 23, 59, 59, 999);
 
-  if (startDate) {
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
-    q = query(q, where("timestamp", ">=", Timestamp.fromDate(start)));
-  }
-
-  if (endDate) {
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-    q = query(q, where("timestamp", "<=", Timestamp.fromDate(end)));
-  }
-
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => {
-    const data = d.data();
-    return {
-      ...data,
-      id: d.id,
-      timestamp: data.timestamp ? (data.timestamp as Timestamp).toDate() : new Date(),
-      waktu_masuk: data.waktu_masuk ? (data.waktu_masuk as Timestamp).toDate() : null,
-      waktu_pulang: data.waktu_pulang ? (data.waktu_pulang as Timestamp).toDate() : null,
-    } as TeacherAttendance;
-  });
-};
-
-// Get monthly attendance for a specific teacher
-export const getMonthlyAttendance = async (
-  uid: string,
-  date: Date
-): Promise<TeacherAttendance[]> => {
-  const start = new Date(date.getFullYear(), date.getMonth(), 1);
-  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
-  
   const q = query(
     collection(db, COLLECTION_NAME),
     where("uid", "==", uid),
-    where("timestamp", ">=", Timestamp.fromDate(start)),
-    where("timestamp", "<=", Timestamp.fromDate(end)),
+    where("timestamp", ">=", Timestamp.fromDate(startOfMonth)),
+    where("timestamp", "<=", Timestamp.fromDate(endOfMonth)),
     orderBy("timestamp", "asc")
   );
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => {
-    const data = d.data();
+  return snapshot.docs.map(docSnap => {
+    const data = docSnap.data();
     return {
       ...data,
-      id: d.id,
-      timestamp: data.timestamp ? (data.timestamp as Timestamp).toDate() : new Date(),
-      waktu_masuk: data.waktu_masuk ? (data.waktu_masuk as Timestamp).toDate() : null,
-      waktu_pulang: data.waktu_pulang ? (data.waktu_pulang as Timestamp).toDate() : null,
+      id: docSnap.id,
+      waktu_masuk: data.waktu_masuk instanceof Timestamp ? data.waktu_masuk.toDate() : data.waktu_masuk,
+      waktu_pulang: data.waktu_pulang instanceof Timestamp ? data.waktu_pulang.toDate() : data.waktu_pulang,
+      timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : data.timestamp,
     } as TeacherAttendance;
   });
 };

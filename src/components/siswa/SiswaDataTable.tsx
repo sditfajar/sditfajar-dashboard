@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, Fragment } from "react";
+import * as XLSX from "xlsx";
 import {
   Table,
   TableBody,
@@ -26,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { MoreHorizontal, Edit, Trash2, Search, Plus, Filter, Eye, X } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Search, Plus, Filter, Eye, X, Download } from "lucide-react";
 import { Siswa } from "@/types/siswa";
 import {
   Select,
@@ -96,6 +97,25 @@ export function SiswaDataTable({
     }
   };
 
+  const handleExportExcel = () => {
+    if (filteredData.length === 0) return;
+
+    const exportData = filteredData.map((siswa, index) => ({
+      "No": index + 1,
+      "NISN": siswa.nisn,
+      "Nama Lengkap": siswa.namaLengkap,
+      "Kelas": siswa.kelas || "-",
+      "Wali Murid": siswa.namaWali || "-",
+      "WhatsApp": siswa.whatsappOrtu || "-",
+      "Status": siswa.status
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data Siswa");
+    XLSX.writeFile(wb, "Data_Siswa.xlsx");
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -133,10 +153,21 @@ export function SiswaDataTable({
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={onAdd} className="gap-2 w-full sm:w-auto">
-          <Plus className="h-4 w-4" />
-          Tambah Siswa
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button 
+            onClick={handleExportExcel} 
+            variant="outline" 
+            className="gap-2 w-full sm:w-auto bg-transparent border border-green-500 text-green-500 hover:bg-green-500 hover:text-white hover:shadow-[0_0_15px_rgba(34,197,94,0.5)] transition-all duration-300"
+            disabled={filteredData.length === 0}
+          >
+            <Download className="h-4 w-4" />
+            Export Excel
+          </Button>
+          <Button onClick={onAdd} className="gap-2 w-full sm:w-auto">
+            <Plus className="h-4 w-4" />
+            Tambah Siswa
+          </Button>
+        </div>
       </div>
 
       <div className="w-full overflow-x-auto rounded-md border">
