@@ -11,6 +11,7 @@ import { UserCircle } from "lucide-react";
 interface UserProfile {
   displayName: string;
   role: string;
+  email: string | null;
   photoURL: string | null;
 }
 
@@ -29,7 +30,8 @@ export function SidebarProfile() {
       // Check session storage first
       const cachedProfile = sessionStorage.getItem(`profile_${user.uid}`);
       if (cachedProfile) {
-        setProfile(JSON.parse(cachedProfile));
+        const parsed = JSON.parse(cachedProfile);
+        setProfile({ ...parsed, email: user.email });
         setIsLoading(false);
         return;
       }
@@ -42,6 +44,7 @@ export function SidebarProfile() {
         let role = "Admin";
         let photoURL = user.photoURL;
         let displayName = user.displayName || "User";
+        let email = user.email;
 
         if (userDocSnap.exists()) {
           const data = userDocSnap.data();
@@ -50,7 +53,7 @@ export function SidebarProfile() {
           if (data.name) displayName = data.name;
         }
 
-        const newProfile = { displayName, role, photoURL };
+        const newProfile = { displayName, role, email, photoURL };
         setProfile(newProfile);
         sessionStorage.setItem(`profile_${user.uid}`, JSON.stringify(newProfile));
       } catch (error) {
@@ -59,6 +62,7 @@ export function SidebarProfile() {
         setProfile({
           displayName: user.displayName || "Admin",
           role: "Admin",
+          email: user.email,
           photoURL: user.photoURL,
         });
       } finally {
@@ -103,8 +107,8 @@ export function SidebarProfile() {
         <span className="text-sm font-medium leading-none truncate mb-1">
           {profile.displayName}
         </span>
-        <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-          {profile.role}
+        <span className="text-[11px] font-medium text-muted-foreground truncate">
+          {profile.email || profile.role}
         </span>
       </div>
     </div>

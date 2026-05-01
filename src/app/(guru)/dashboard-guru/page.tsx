@@ -45,14 +45,6 @@ const menuCards: MenuCard[] = [
     iconBg: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
   },
   {
-    title: "Mata Pelajaran",
-    description: "Daftar mata pelajaran yang Anda ajar beserta kurikulum dan silabus.",
-    href: "/mapel-guru",
-    icon: BookOpen,
-    gradient: "from-violet-500/10 via-purple-500/5 to-transparent",
-    iconBg: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
-  },
-  {
     title: "Absensi Siswa",
     description: "Input dan rekap kehadiran siswa secara langsung per kelas per hari.",
     href: "/absensi-siswa",
@@ -60,6 +52,14 @@ const menuCards: MenuCard[] = [
     gradient: "from-orange-500/10 via-amber-500/5 to-transparent",
     iconBg: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
     badge: "Input Harian",
+  },
+  {
+    title: "Mata Pelajaran",
+    description: "Daftar mata pelajaran yang Anda ajar beserta kurikulum dan silabus.",
+    href: "/mapel-guru",
+    icon: BookOpen,
+    gradient: "from-violet-500/10 via-purple-500/5 to-transparent",
+    iconBg: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
   },
 ];
 
@@ -109,23 +109,23 @@ export default function DashboardGuruPage() {
 
   const today = currentTime
     ? currentTime.toLocaleDateString("id-ID", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })
     : "";
 
   const timeStr = currentTime
     ? currentTime.toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }).replace(/\./g, ":")
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }).replace(/\./g, ":")
     : "";
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-8 min-h-screen">
+    <div className="flex flex-col gap-6 min-h-screen">
       {/* Header Section */}
       <FadeIn className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/8 via-background to-muted/30 p-6 md:p-8 shadow-sm">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_hsl(var(--primary)/0.08)_0%,_transparent_60%)]" />
@@ -235,9 +235,8 @@ export default function DashboardGuruPage() {
             >
               <span className="text-xs text-muted-foreground">{item.label}</span>
               <span
-                className={`text-xs font-semibold ${
-                  item.accent ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
-                }`}
+                className={`text-xs font-semibold ${item.accent ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+                  }`}
               >
                 {item.value}
               </span>

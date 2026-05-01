@@ -67,11 +67,10 @@ export function AbsensiSiswaInput() {
   const [students, setStudents] = useState<SiswaWithAbsensi[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
   const [successPopup, setSuccessPopup] = useState<{ open: boolean; title: string; description: string }>({
     open: false, title: "", description: "",
   });
-  const [selectedClass, setSelectedClass] = useState<string>("Semua");
+  const [selectedClass, setSelectedClass] = useState<string>("");
   const [hasData, setHasData] = useState(false);
   const [forceInputWeekend, setForceInputWeekend] = useState(false);
   const [guruName, setGuruName] = useState<string>("");
@@ -80,12 +79,8 @@ export function AbsensiSiswaInput() {
 
   useEffect(() => {
     const savedClass = localStorage.getItem("last_selected_class");
-    if (savedClass) {
+    if (savedClass && savedClass !== "Semua") {
       setSelectedClass(savedClass);
-    } else {
-      // Kunjungan pertama: default ke kelas pertama yang tersedia
-      setSelectedClass("1A");
-      localStorage.setItem("last_selected_class", "1A");
     }
   }, []);
 
@@ -145,12 +140,6 @@ export function AbsensiSiswaInput() {
       setHasData(existingAbsensi.length > 0);
       setForceInputWeekend(false);
 
-      if (existingAbsensi.length > 0) {
-        setIsLocked(true);
-      } else {
-        setIsLocked(false);
-      }
-
       const merged: SiswaWithAbsensi[] = activeSiswa.map((siswa) => {
         const abs = existingAbsensi.find((a) => a.studentId === siswa.nisn);
         return {
@@ -170,7 +159,6 @@ export function AbsensiSiswaInput() {
   };
 
   const handleStatusChange = (nisn: string, status: AbsensiStatus) => {
-    if (isLocked) return;
     setStudents((prev) =>
       prev.map((s) => (s.nisn === nisn ? { ...s, absensiStatus: status } : s))
     );
@@ -181,7 +169,6 @@ export function AbsensiSiswaInput() {
   };
 
   const handleConfirmSave = async () => {
-    if (isLocked) return;
     setIsSaving(true);
     try {
       const dateStr = formatDateOnly(date);
@@ -199,7 +186,6 @@ export function AbsensiSiswaInput() {
         }));
 
       await saveAbsensi(dateStr, monthYear, recordsToSave, guruName || "Guru");
-      setIsLocked(true);
       setIsConfirmOpen(false);
       setKeterangan("");
       toast.success("Absensi Tersimpan! ✅", {
@@ -224,9 +210,9 @@ export function AbsensiSiswaInput() {
   const today = startOfToday();
   const isPastDate = isBefore(date, today);
 
-  const displayedClasses = selectedClass === "Semua" 
-    ? classes 
-    : classes.filter((c) => c === selectedClass);
+  const displayedClasses = selectedClass
+    ? classes.filter((c) => c === selectedClass)
+    : [];
 
   return (
     <>
@@ -267,7 +253,6 @@ export function AbsensiSiswaInput() {
                   <SelectValue placeholder="Pilih Kelas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Semua">Semua Kelas</SelectItem>
                   {classes.map((c) => (
                     <SelectItem key={c} value={c}>
                       Kelas {c}
@@ -279,14 +264,9 @@ export function AbsensiSiswaInput() {
           </div>
 
           <div className="flex flex-col items-end gap-2">
-            <Button className="hidden md:inline-flex" onClick={handleSaveClick} disabled={isSaving || isLocked || isPastDate}>
-              {isSaving ? "Menyimpan..." : (isLocked ? "Terkunci" : "Simpan Absensi")}
+            <Button className="hidden md:inline-flex" onClick={handleSaveClick} disabled={isSaving || isPastDate || !selectedClass}>
+              {isSaving ? "Menyimpan..." : "Simpan Absensi"}
             </Button>
-            {isLocked && (
-              <span className="text-sm text-amber-600 font-medium hidden md:block">
-                Terkunci (Read-Only)
-              </span>
-            )}
           </div>
         </div>
 
@@ -298,6 +278,10 @@ export function AbsensiSiswaInput() {
           <Button variant="outline" onClick={() => setForceInputWeekend(true)}>
             Input Manual Absen Ekskul
           </Button>
+        </div>
+      ) : !selectedClass ? (
+        <div className="p-16 flex flex-col items-center justify-center space-y-4 text-muted-foreground border rounded-lg bg-muted/20">
+          <p className="text-sm font-medium">Silakan pilih kelas terlebih dahulu untuk melihat data absensi.</p>
         </div>
       ) : isLoading ? (
         <div className="p-16 flex flex-col items-center justify-center space-y-4 text-muted-foreground border rounded-lg bg-muted/20">
@@ -337,23 +321,23 @@ export function AbsensiSiswaInput() {
                               onValueChange={(val) =>
                                 handleStatusChange(siswa.nisn, val as AbsensiStatus)
                               }
-                              disabled={isLocked || isPastDate}
+                              disabled={isPastDate}
                             >
                               <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Hadir" id={`H-${siswa.nisn}`} disabled={isLocked || isPastDate} />
-                                <Label htmlFor={`H-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-green-600", (isLocked || isPastDate) && "opacity-50")}>Hadir</Label>
+                                <RadioGroupItem value="Hadir" id={`H-${siswa.nisn}`} disabled={isPastDate} />
+                                <Label htmlFor={`H-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-green-600", isPastDate && "opacity-50")}>Hadir</Label>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Sakit" id={`S-${siswa.nisn}`} disabled={isLocked || isPastDate} />
-                                <Label htmlFor={`S-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-blue-600", (isLocked || isPastDate) && "opacity-50")}>Sakit</Label>
+                                <RadioGroupItem value="Sakit" id={`S-${siswa.nisn}`} disabled={isPastDate} />
+                                <Label htmlFor={`S-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-blue-600", isPastDate && "opacity-50")}>Sakit</Label>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Izin" id={`I-${siswa.nisn}`} disabled={isLocked || isPastDate} />
-                                <Label htmlFor={`I-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-yellow-600", (isLocked || isPastDate) && "opacity-50")}>Izin</Label>
+                                <RadioGroupItem value="Izin" id={`I-${siswa.nisn}`} disabled={isPastDate} />
+                                <Label htmlFor={`I-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-yellow-600", isPastDate && "opacity-50")}>Izin</Label>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Alpa" id={`A-${siswa.nisn}`} disabled={isLocked || isPastDate} />
-                                <Label htmlFor={`A-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-red-600", (isLocked || isPastDate) && "opacity-50")}>Alpa</Label>
+                                <RadioGroupItem value="Alpa" id={`A-${siswa.nisn}`} disabled={isPastDate} />
+                                <Label htmlFor={`A-${siswa.nisn}`} className={cn("font-normal cursor-pointer text-red-600", isPastDate && "opacity-50")}>Alpa</Label>
                               </div>
                             </RadioGroup>
                           </div>
@@ -363,7 +347,7 @@ export function AbsensiSiswaInput() {
                             <Select 
                               value={siswa.absensiStatus} 
                               onValueChange={(val) => handleStatusChange(siswa.nisn, val as AbsensiStatus)}
-                              disabled={isLocked || isPastDate}
+                              disabled={isPastDate}
                             >
                               <SelectTrigger className={cn("w-[110px]", getStatusColor(siswa.absensiStatus))}>
                                 <SelectValue placeholder="Status" />
@@ -403,13 +387,8 @@ export function AbsensiSiswaInput() {
           {/* Mobile Submit Button at bottom */}
           {displayedClasses.length > 0 && (
             <div className="md:hidden mt-6 flex flex-col gap-2">
-              {isLocked && (
-                <div className="text-sm text-amber-600 font-medium text-center">
-                  Data Terkunci (Read-Only)
-                </div>
-              )}
-              <Button className="w-full" onClick={handleSaveClick} disabled={isSaving || isLocked || isPastDate}>
-                {isSaving ? "Menyimpan..." : (isLocked ? "Terkunci" : "Simpan Absensi")}
+              <Button className="w-full" onClick={handleSaveClick} disabled={isSaving || isPastDate || !selectedClass}>
+                {isSaving ? "Menyimpan..." : "Simpan Absensi"}
               </Button>
             </div>
           )}
