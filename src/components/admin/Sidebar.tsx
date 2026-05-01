@@ -25,7 +25,6 @@ export const adminLinks: NavItem[] = [
     children: [
       { name: "Data Siswa", href: "/siswa" },
       { name: "Absensi Siswa", href: "/absensi" },
-      { name: "Pembayaran Siswa", href: "/pembayaran" },
       { name: "Data Siswa Lainnya", disabled: true },
     ],
   },
