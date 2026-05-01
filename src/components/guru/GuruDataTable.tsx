@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import * as XLSX from "xlsx";
 import {
   Table,
   TableBody,
@@ -37,7 +38,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, Edit, Trash2, Search, Plus, Filter, Eye, X } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Search, Plus, Filter, Eye, X, Download } from "lucide-react";
 
 interface GuruDataTableProps {
   data: any[]; // using any for now, better to define a Teacher interface
@@ -82,6 +83,27 @@ export function GuruDataTable({
     });
   }, [data, searchQuery, filterPosisi]);
 
+  const handleExportExcel = () => {
+    if (filteredData.length === 0) return;
+
+    const exportData = filteredData.map((guru, index) => ({
+      "No": index + 1,
+      "NIP / NUPTK": guru.nip || "-",
+      "Nama": guru.name,
+      "L/P": guru.gender,
+      "Posisi": guru.position,
+      "Status": guru.status,
+      "Email": guru.email || "-",
+      "No HP": guru.phone || "-",
+      "Alamat": guru.address || "-"
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data Guru");
+    XLSX.writeFile(wb, "Data_Guru.xlsx");
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -118,10 +140,21 @@ export function GuruDataTable({
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={onAdd} className="gap-2 w-full sm:w-auto">
-          <Plus className="h-4 w-4" />
-          Tambah Guru
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button 
+            onClick={handleExportExcel} 
+            variant="outline" 
+            className="gap-2 w-full sm:w-auto bg-transparent border border-green-500 text-green-500 hover:bg-green-500 hover:text-white hover:shadow-[0_0_15px_rgba(34,197,94,0.5)] transition-all duration-300"
+            disabled={filteredData.length === 0}
+          >
+            <Download className="h-4 w-4" />
+            Export Excel
+          </Button>
+          <Button onClick={onAdd} className="gap-2 w-full sm:w-auto">
+            <Plus className="h-4 w-4" />
+            Tambah Guru
+          </Button>
+        </div>
       </div>
 
       <div className="w-full overflow-x-auto rounded-md border bg-white dark:bg-zinc-950">

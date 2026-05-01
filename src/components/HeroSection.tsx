@@ -43,13 +43,12 @@ export function HeroSection() {
         </div>
 
         <h1 className="max-w-4xl text-4xl font-extrabold tracking-tight sm:text-4xl md:text-6xl lg:text-7xl mb-6 text-foreground">
-          Membangun Generasi{" "}
-          <span className="text-primary block sm:inline">Cerdas &amp; Berakhlak.</span>
+          Belajar dengan Iman, {" "}
+          <span className="text-primary block sm:inline">Tumbuh dengan Ilmu.</span>
         </h1>
 
         <p className="max-w-2xl text-lg text-muted-foreground mb-10 sm:text-xl md:text-2xl">
-          SDIT Fajar memadukan kurikulum nasional dan nilai-nilai Islami untuk
-          menciptakan lingkungan belajar yang dinamis, modern, dan menyenangkan.
+          SDIT Fajar membentuk generasi Islami yang cerdas, mandiri, dan berkarakter mulia.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">

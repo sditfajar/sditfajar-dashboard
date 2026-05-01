@@ -192,9 +192,6 @@ export function GuruFormDialog({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="Guru">Guru</SelectItem>
-                      <SelectItem value="Staff">Staff</SelectItem>
-                      <SelectItem value="Karyawan">Karyawan</SelectItem>
-                      <SelectItem value="Security">Security</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

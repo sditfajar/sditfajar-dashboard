@@ -12,6 +12,7 @@ const navLinks = [
   { name: 'Beranda', href: '#' },
   { name: 'Berita', href: '#berita' },
   { name: 'Profil', href: '#profil' },
+  { name: 'Manajemen', href: '#manajemen' },
   { name: 'Akademik', href: '#akademik' },
   { name: 'Kontak', href: '#kontak' },
 ];

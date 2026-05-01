@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { CreditCard, Loader2 } from "lucide-react";
@@ -55,6 +56,17 @@ export default function SPPBulananPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tempTagihan, setTempTagihan] = useState<TagihanBulanan[]>([]);
+  const [selectedKelas, setSelectedKelas] = useState<string>("semua");
+
+  const uniqueClasses = useMemo(() => {
+    const classes = new Set(siswa.map(s => s.kelas).filter(Boolean));
+    return Array.from(classes).sort();
+  }, [siswa]);
+
+  const filteredSiswa = useMemo(() => {
+    if (selectedKelas === "semua") return siswa;
+    return siswa.filter(s => s.kelas === selectedKelas);
+  }, [siswa, selectedKelas]);
 
   useEffect(() => {
     fetchData();
@@ -267,9 +279,24 @@ export default function SPPBulananPage() {
       </div>
 
       <Card className="border-border shadow-sm">
-        <CardHeader>
-          <CardTitle>Data Pembayaran Siswa</CardTitle>
-          <CardDescription>Daftar siswa dan status tagihan SPP bulanan.</CardDescription>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <CardTitle>Data Pembayaran Siswa</CardTitle>
+            <CardDescription>Daftar siswa dan status tagihan SPP bulanan.</CardDescription>
+          </div>
+          <div className="w-full sm:w-[200px]">
+            <Select value={selectedKelas} onValueChange={setSelectedKelas}>
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih Kelas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="semua">Semua Kelas</SelectItem>
+                {uniqueClasses.map((kelas) => (
+                  <SelectItem key={kelas} value={kelas}>{kelas}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -288,7 +315,7 @@ export default function SPPBulananPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {siswa.map((s) => {
+                  {filteredSiswa.map((s) => {
                     const k = keuangan[s.id];
                     let statusBulanIni = "Belum Lunas";
                     if (k && k.tagihanBulanan) {
@@ -323,7 +350,7 @@ export default function SPPBulananPage() {
                       </TableRow>
                     );
                   })}
-                  {siswa.length === 0 && (
+                  {filteredSiswa.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                         Belum ada data siswa.

@@ -2,6 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { HeroSection } from "@/components/HeroSection";
 import { NewsSection } from "@/components/NewsSection";
 import { ProfileSection } from "@/components/ProfileSection";
+import { ManajemenSekolah } from "@/components/ManajemenSekolah";
 import { AcademicSection } from "@/components/AcademicSection";
 import { ContactSection } from "@/components/ContactSection";
 import { Footer } from "@/components/Footer";
@@ -14,6 +15,7 @@ export default function Home() {
         <HeroSection />
         <NewsSection />
         <ProfileSection />
+        <ManajemenSekolah />
         <AcademicSection />
         <ContactSection />
       </main>

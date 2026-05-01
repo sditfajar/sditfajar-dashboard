@@ -224,7 +224,7 @@ export function AbsensiLaporan() {
         </div>
         </div>
 
-        <Button onClick={() => setIsExportOpen(true)} className="gap-2" disabled={filteredData.length === 0}>
+        <Button variant="outline" onClick={() => setIsExportOpen(true)} className="gap-2 bg-transparent border border-green-500 text-green-500 hover:bg-green-500 hover:text-white hover:shadow-[0_0_15px_rgba(34,197,94,0.5)] transition-all duration-300" disabled={filteredData.length === 0}>
           <FileDown className="h-4 w-4" />
           Export Excel
         </Button>

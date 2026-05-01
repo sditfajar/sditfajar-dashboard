@@ -97,20 +97,14 @@ export function NewsSection() {
           </div>
         ) : (
           <FadeInStagger className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {news.map((item) => (
+            {news.slice(0, 3).map((item) => (
               <FadeIn key={item.id}>
                 <Card 
                   className="group flex flex-col h-full transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 bg-background/60 backdrop-blur-xl border-border/50 overflow-hidden"
                 >
                   <div className="h-2 w-full bg-gradient-to-r from-primary to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 relative" />
                   
-                  <div className="w-full h-48 bg-primary/5 flex items-center justify-center relative overflow-hidden shrink-0">
-                      <Newspaper className="w-32 h-32 text-primary/10 absolute -right-6 -bottom-6 transform rotate-12 transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6" />
-                      <div className="flex flex-col items-center justify-center text-primary/40 z-10">
-                        <Newspaper className="w-8 h-8 mb-2 opacity-50" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Informasi SDIT</span>
-                      </div>
-                    </div>
+
                   
                   <CardHeader className="pt-6">
                     <div className="flex items-center text-sm font-medium text-primary/80 mb-3">

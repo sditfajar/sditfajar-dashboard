@@ -212,22 +212,7 @@ export function AbsensiGuruInput() {
   const isComplete = phase === "selesai";
   const isButtonDisabled = isLocating || !!locationError || isOutOfRange || isSubmitting || isComplete || phase === "loading";
 
-  const getButtonText = () => {
-    if (isSubmitting) return "Menyimpan...";
-    if (phase === "loading") return "Memeriksa status...";
-    if (isOutOfRange) return "Di Luar Jangkauan";
-    if (phase === "masuk") return "Absen Masuk";
-    if (phase === "pulang") return "Absen Pulang";
-    if (phase === "selesai") return "Sudah Absen Lengkap Hari Ini";
-    return "Absen";
-  };
 
-  const getButtonIcon = () => {
-    if (phase === "masuk") return <LogIn className="w-4 h-4 mr-2" />;
-    if (phase === "pulang") return <LogOut className="w-4 h-4 mr-2" />;
-    if (phase === "selesai") return <ShieldCheck className="w-4 h-4 mr-2" />;
-    return null;
-  };
 
   return (
     <>
@@ -322,7 +307,7 @@ export function AbsensiGuruInput() {
             ) : null}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3">
+        <CardFooter className="flex flex-col gap-4">
           <div className="text-center w-full min-h-[32px] flex items-center justify-center">
             {currentTime && (
               <span className="text-2xl font-mono font-bold text-yellow-500 dark:text-yellow-400 animate-pulse tracking-widest drop-shadow-sm">
@@ -330,16 +315,37 @@ export function AbsensiGuruInput() {
               </span>
             )}
           </div>
-          <Button
-            className={`w-full ${isComplete ? "opacity-50 cursor-not-allowed" : ""}`}
-            size="lg"
-            disabled={isButtonDisabled}
-            onClick={handleAbsen}
-            variant={phase === "pulang" ? "outline" : "default"}
-          >
-            {getButtonIcon()}
-            {getButtonText()}
-          </Button>
+          
+          <div className="flex w-full gap-3">
+            <Button
+              className={`flex-1 transition-all duration-300 ${phase === "masuk" && !isButtonDisabled ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg" : ""}`}
+              size="lg"
+              disabled={phase !== "masuk" || isButtonDisabled}
+              onClick={handleAbsen}
+              variant="default"
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              {isSubmitting && phase === "masuk" ? "Menyimpan..." : "Absen Masuk"}
+            </Button>
+            
+            <Button
+              className={`flex-1 transition-all duration-300 ${phase === "pulang" && !isButtonDisabled ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg" : ""}`}
+              size="lg"
+              disabled={phase !== "pulang" || isButtonDisabled}
+              onClick={handleAbsen}
+              variant={phase === "pulang" ? "default" : "outline"}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              {isSubmitting && phase === "pulang" ? "Menyimpan..." : "Absen Pulang"}
+            </Button>
+          </div>
+
+          {phase === "selesai" && (
+            <div className="w-full text-center mt-2 p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-md text-sm font-medium animate-in fade-in slide-in-from-bottom-2 flex items-center justify-center gap-2">
+              <ShieldCheck className="w-5 h-5" />
+              Anda sudah menyelesaikan absen hari ini
+            </div>
+          )}
         </CardFooter>
       </Card>
 
