@@ -10,6 +10,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const BULAN_AKADEMIK = [
   "Juli", "Agustus", "September", "Oktober", "November", "Desember",
@@ -20,12 +21,14 @@ export default function DashboardPage() {
   const [totalKonten, setTotalKonten] = useState(0);
   const [unreadPesan, setUnreadPesan] = useState(0);
   const [keuanganData, setKeuanganData] = useState<any[]>([]);
+  const [kontenList, setKontenList] = useState<any[]>([]);
 
   useEffect(() => {
     const loadStats = async () => {
       try {
         const konten = await getKontenBerita();
         setTotalKonten(konten.length);
+        setKontenList(konten);
         const pesan = await getPesanKontak();
         setUnreadPesan(pesan.filter(p => p.status === "belum_dibaca").length);
       } catch (error) {
@@ -86,6 +89,26 @@ export default function DashboardPage() {
       { name: "Belum Lunas", value: belumLunas, color: "hsl(var(--destructive))" }
     ];
   }, [keuanganData, currentSemester]);
+
+  const newsChartData = useMemo(() => {
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+      "Jul", "Agu", "Sep", "Okt", "Nov", "Des"
+    ];
+    const counts = months.map(m => ({ name: m, count: 0 }));
+
+    kontenList.forEach(item => {
+      if (item.tanggal) {
+        const date = new Date(item.tanggal);
+        const monthIdx = date.getMonth();
+        if (monthIdx >= 0 && monthIdx < 12) {
+          counts[monthIdx].count++;
+        }
+      }
+    });
+
+    return counts;
+  }, [kontenList]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -279,6 +302,60 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+        </motion.div>
+
+        {/* 5. News Publication Activity Chart */}
+        <motion.div variants={itemVariants} className="md:col-span-2 lg:col-span-3">
+          <Card className="shadow-sm border-green-500/20 bg-green-500/5">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Aktivitas Publikasi Berita</CardTitle>
+                <p className="text-xs text-muted-foreground">Jumlah konten berita yang dipublikasikan per bulan.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8 gap-2" asChild>
+                  <Link href="/konten">
+                    <UploadCloud className="h-4 w-4" />
+                    Upload
+                  </Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={newsChartData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.2)" />
+                    <XAxis 
+                      dataKey="name" 
+                      fontSize={12} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      stroke="hsl(var(--muted-foreground))" 
+                    />
+                    <YAxis
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      stroke="hsl(var(--muted-foreground))"
+                      allowDecimals={false}
+                    />
+                    <RechartsTooltip
+                      cursor={{ fill: 'rgba(34, 197, 94, 0.1)' }}
+                      contentStyle={{ borderRadius: "8px", border: "1px solid rgba(34, 197, 94, 0.2)" }}
+                      formatter={(value: any) => [value + " Berita", "Jumlah"]}
+                    />
+                    <Bar 
+                      dataKey="count" 
+                      fill="hsl(142, 71%, 45%)" // Green-500 equivalent
+                      radius={[4, 4, 0, 0]} 
+                      barSize={40}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
       </motion.div>
     </div>
