@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase/config";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, Plus, Camera, Upload } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -32,7 +32,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Camera, Upload } from "lucide-react";
 
 const toTitleCase = (str: string) =>
   str.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -266,7 +265,7 @@ export function GuruFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Jenis Kelamin</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih L/P" />
@@ -288,7 +287,7 @@ export function GuruFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Posisi</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih Posisi" />
@@ -309,7 +308,7 @@ export function GuruFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih Status" />
@@ -368,52 +367,40 @@ export function GuruFormDialog({
               )}
             />
 
-            <div className="md:col-span-2 flex flex-col md:flex-row items-center gap-6 p-4 bg-muted/30 rounded-xl border border-dashed border-primary/20">
+            <div className="md:col-span-2 flex flex-col items-center justify-center p-6 bg-muted/20 rounded-2xl border-2 border-dashed border-muted-foreground/20 hover:border-primary/30 transition-colors">
               <div className="relative group">
-                <Avatar className="h-24 w-24 border-4 border-background shadow-lg transition-transform group-hover:scale-105">
+                <Avatar className="h-28 w-28 border-4 border-background shadow-xl transition-all group-hover:ring-4 group-hover:ring-primary/10">
                   <AvatarImage src={previewUrl || ""} className="object-cover" />
                   <AvatarFallback className="bg-primary/5">
-                    <Camera className="h-10 w-10 text-primary/40" />
+                    <User className="h-12 w-12 text-primary/20" />
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                  <Camera className="h-6 w-6 text-white" />
+                <div className="absolute -bottom-1 -right-1 p-2 bg-primary rounded-full border-2 border-background shadow-lg cursor-pointer hover:scale-110 transition-transform active:scale-95">
+                  {isUploading ? (
+                    <Loader2 className="h-4 w-4 text-white animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4 text-white" />
+                  )}
                   <Input
                     type="file"
                     accept="image/*"
                     className="absolute inset-0 opacity-0 cursor-pointer"
                     onChange={handleFileChange}
+                    disabled={isUploading}
                   />
                 </div>
-              </div>
-
-              <div className="flex-1 space-y-2 w-full text-center md:text-left">
-                <h4 className="text-sm font-semibold text-primary uppercase tracking-wider">Foto Profil</h4>
-                <p className="text-xs text-muted-foreground">
-                  Unggah foto guru dengan format JPG, PNG, atau WebP. Ukuran akan dioptimalkan secara otomatis.
-                </p>
-                <div className="relative mt-4">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="photo-upload"
-                  />
-                  <label
-                    htmlFor="photo-upload"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-background border rounded-lg text-xs font-medium cursor-pointer hover:bg-muted/50 transition-colors"
-                  >
-                    <Upload className="h-3 w-3" />
-                    {selectedFile ? "Ganti Foto" : "Pilih Foto Guru"}
-                  </label>
-                  {selectedFile && (
-                    <span className="ml-3 text-[10px] text-green-600 font-medium animate-in fade-in">
-                      ✓ {selectedFile.name}
+                {isUploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
+                    <span className="text-[10px] font-bold text-white bg-black/50 px-2 py-0.5 rounded-full">
+                      {uploadProgress}%
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
+              <p className="mt-3 text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
+                {isUploading ? "Mengunggah..." : (selectedFile ? "Foto Terpilih" : "Upload Foto")}
+              </p>
+
             </div>
 
             <div className="md:col-span-2 border-t pt-4 mt-2">

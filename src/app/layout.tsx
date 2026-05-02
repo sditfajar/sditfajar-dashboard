@@ -1,8 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
+import PWARegistration from "@/components/PWARegistration";
+import InstallPrompt from "@/components/InstallPrompt"; // 1. Import komponen popup
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -12,9 +14,15 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "SDIT Fajar | Cerdas, Kreatif, Berakhlak Mulia",
   description: "Website resmi SDIT Fajar - Mewujudkan generasi cerdas, kreatif, dan berakhlak mulia.",
+  manifest: "/manifest.json",
   icons: {
-    icon: '/favicon.png', // Tambahkan baris ini HANYA jika pakai format PNG/SVG
+    icon: '/favicon.ico',
+    apple: '/icon-192.png',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#000000",
 };
 
 export default function RootLayout({
@@ -31,8 +39,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          {/* Mendaftarkan Service Worker */}
+          <PWARegistration />
+
           {children}
+
+          {/* Komponen UI Global */}
           <Toaster />
+          <InstallPrompt /> {/* 2. Panggil komponen popup di sini */}
+
         </ThemeProvider>
       </body>
     </html>
