@@ -100,6 +100,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="focus-visible:ring-green-500"
               />
             </div>
             <div className="grid gap-2">
@@ -110,11 +111,12 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="focus-visible:ring-green-500"
               />
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoading ? "Memproses..." : "Masuk"}
             </Button>

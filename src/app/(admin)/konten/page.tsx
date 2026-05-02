@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
@@ -69,6 +71,7 @@ type KontenBeritaInput = Omit<KontenBerita, "id" | "createdAt">;
 type SubmitStage = "idle" | "compressing" | "uploading" | "saving";
 
 export default function KontenPage() {
+  const router = useRouter();
   const [data, setData] = useState<KontenBerita[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -243,6 +246,13 @@ export default function KontenPage() {
             Kelola berita dan informasi yang tampil di halaman utama website.
           </p>
         </div>
+        <Link 
+          href="/#berita" 
+          target="_blank"
+          className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 shrink-0"
+        >
+          Lihat Berita
+        </Link>
       </FadeIn>
 
       {/* ── Grid Utama 1 kolom HP / 2 kolom Laptop ─────────────────── */}
@@ -576,6 +586,11 @@ export default function KontenPage() {
         onOpenChange={(open) => setSuccessPopup((prev) => ({ ...prev, open }))}
         title={successPopup.title}
         description={successPopup.description}
+        secondaryActionLabel="Lihat Berita"
+        onSecondaryAction={() => {
+          setSuccessPopup((prev) => ({ ...prev, open: false }));
+          router.push("/#berita");
+        }}
       />
     </>
   );

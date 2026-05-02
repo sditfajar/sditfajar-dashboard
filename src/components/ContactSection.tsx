@@ -49,7 +49,7 @@ export function ContactSection() {
           <FadeIn className="space-y-8">
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-primary">
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                   <MapPin className="h-5 w-5" />
                   <h4 className="font-bold text-foreground">Alamat</h4>
                 </div>
@@ -57,7 +57,7 @@ export function ContactSection() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-primary">
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                   <Phone className="h-5 w-5" />
                   <h4 className="font-bold text-foreground">Telepon / WA</h4>
                 </div>
@@ -69,7 +69,7 @@ export function ContactSection() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-primary">
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                   <Mail className="h-5 w-5" />
                   <h4 className="font-bold text-foreground">Email</h4>
                 </div>
@@ -77,7 +77,7 @@ export function ContactSection() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-primary">
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                   <Clock className="h-5 w-5" />
                   <h4 className="font-bold text-foreground">Jam Operasional</h4>
                 </div>
@@ -126,7 +126,7 @@ export function ContactSection() {
                 </label>
                 <Textarea id="message" placeholder="Tuliskan pertanyaan atau pesan Anda..." rows={5} value={formData.pesan} onChange={(e) => setFormData({ ...formData, pesan: e.target.value })} disabled={isSubmitting} />
               </div>
-              <Button type="submit" className="w-full h-11 text-base mt-2" disabled={isSubmitting}>
+              <Button type="submit" className="w-full h-11 text-base mt-2 bg-green-600 hover:bg-green-700 text-white" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

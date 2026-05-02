@@ -37,8 +37,8 @@ export function HeroSection() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl -z-10 pointer-events-none"></div>
 
       <FadeIn className="container relative z-10 mx-auto px-4 md:px-6 text-center flex flex-col items-center">
-        <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm text-primary mb-6">
-          <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse"></span>
+        <div className="inline-flex items-center rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm text-green-600 dark:text-green-400 mb-6">
+          <span className="flex h-2 w-2 rounded-full bg-green-600 dark:bg-green-400 mr-2 animate-pulse"></span>
           Penerimaan Siswa Baru Dibuka
         </div>
 
@@ -51,14 +51,14 @@ export function HeroSection() {
           SDIT Fajar membentuk generasi Islami yang cerdas, mandiri, dan berkarakter mulia.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-4 sm:w-auto">
           <Button size="lg" asChild className="gap-2 h-12 px-8 text-base shadow-lg shadow-primary/25 transition-transform hover:scale-105">
             <Link href="/pendaftaran">
               Mulai Pendaftaran <ArrowRight className="w-4 h-4" />
             </Link>
           </Button>
-          <Button size="lg" variant="outline" className="h-12 px-8 text-base bg-background/50 backdrop-blur-sm transition-transform hover:scale-105">
-            Jelajahi Program
+          <Button size="lg" variant="outline" className="h-12 px-8 text-base bg-background/50 backdrop-blur-sm transition-transform hover:scale-105" asChild>
+            <Link href="#akademik">Jelajahi Program</Link>
           </Button>
         </div>
       </FadeIn>

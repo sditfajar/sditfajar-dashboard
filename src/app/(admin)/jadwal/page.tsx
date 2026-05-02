@@ -7,6 +7,8 @@ import { JadwalFormDialog } from "@/components/pembelajaran/JadwalFormDialog";
 import { getSchedules, addSchedule, updateSchedule, deleteSchedule, Schedule } from "@/lib/firebase/pembelajaran";
 import { toast } from "sonner";
 import { SuccessDialog } from "@/components/ui/success-dialog";
+import { Button } from "@/components/ui/button";
+import { Printer } from "lucide-react";
 
 export default function JadwalPage() {
   const [data, setData] = useState<Schedule[]>([]);
@@ -85,6 +87,10 @@ export default function JadwalPage() {
             Kelola jadwal mengajar, ploting guru, dan mata pelajaran di setiap kelas.
           </p>
         </div>
+        <Button variant="outline" onClick={() => window.print()} className="print:hidden shrink-0">
+          <Printer className="mr-2 h-4 w-4" />
+          Print Jadwal
+        </Button>
       </FadeIn>
 
       <FadeIn>

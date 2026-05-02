@@ -15,6 +15,8 @@ interface SuccessDialogProps {
   description?: string;
   actionLabel?: string;
   onAction?: () => void;
+  secondaryActionLabel?: string;
+  onSecondaryAction?: () => void;
 }
 
 export function SuccessDialog({
@@ -24,6 +26,8 @@ export function SuccessDialog({
   description,
   actionLabel,
   onAction,
+  secondaryActionLabel,
+  onSecondaryAction,
 }: SuccessDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -39,19 +43,26 @@ export function SuccessDialog({
             )}
           </div>
         </div>
-        <DialogFooter className="sm:justify-center">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-center">
           <Button 
-            onClick={() => {
-              if (onAction) {
-                onAction();
-              } else {
-                onOpenChange(false);
-              }
-            }} 
-            className="min-w-[120px]"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="flex-1 sm:flex-none sm:min-w-[100px]"
           >
-            {actionLabel || "OK, Mengerti"}
+            OK
           </Button>
+          {secondaryActionLabel && (
+            <Button 
+              onClick={() => {
+                if (onSecondaryAction) {
+                  onSecondaryAction();
+                }
+              }} 
+              className="flex-1 sm:flex-none sm:min-w-[120px] bg-green-600 hover:bg-green-700 text-white"
+            >
+              {secondaryActionLabel}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

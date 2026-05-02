@@ -67,11 +67,11 @@ export function NewsSection() {
         <FadeIn className="mb-16 flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
           {/* Teks: Judul & Deskripsi */}
           <div className="flex-1 flex flex-col items-center md:items-start space-y-4 text-center md:text-left">
-            <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary mb-2">
+            <div className="inline-flex items-center rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm font-medium text-green-600 dark:text-green-400 mb-2">
               Update Terbaru
             </div>
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-tight">
-              Berita & Informasi
+              Berita & Informasi #berita
             </h2>
             <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed">
               Ikuti perkembangan terbaru, pengumuman, dan prestasi dari SDIT Fajar. Dapatkan informasi terkini seputar kegiatan belajar mengajar dan agenda sekolah kami.

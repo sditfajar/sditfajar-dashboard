@@ -120,8 +120,8 @@ export default function DashboardPage() {
         {/* 1. Manajemen Konten Card */}
         <motion.div variants={itemVariants}>
           <Link href="/konten" className="group block h-full">
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-8 border border-blue-500/20 h-full transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1">
-              <div className="absolute -right-6 -top-6 text-blue-500/10 group-hover:text-blue-500/20 transition-colors">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-500/10 to-green-600/5 p-8 border border-green-500/20 h-full transition-all duration-300 hover:shadow-xl hover:shadow-green-500/10 hover:-translate-y-1">
+              <div className="absolute -right-6 -top-6 text-green-500/10 group-hover:text-green-500/20 transition-colors">
                 <svg width="160" height="160" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <motion.path
                     d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8l-4 4v14a2 2 0 0 0 2 2z"
@@ -134,13 +134,13 @@ export default function DashboardPage() {
               </div>
               <div className="relative z-10 flex flex-col h-full justify-between">
                 <div className="flex items-start justify-between">
-                  <div className="p-3 bg-blue-500 text-white rounded-2xl shadow-lg shadow-blue-500/30">
+                  <div className="p-3 bg-green-500 text-white rounded-2xl shadow-lg shadow-green-500/30">
                     <UploadCloud className="w-6 h-6" />
                   </div>
-                  <ArrowUpRight className="w-5 h-5 text-blue-500 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0" />
+                  <ArrowUpRight className="w-5 h-5 text-green-500 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0" />
                 </div>
                 <div className="mt-8">
-                  <h3 className="text-4xl font-black text-blue-600 dark:text-blue-400">{totalKonten}</h3>
+                  <h3 className="text-4xl font-black text-green-600 dark:text-green-400">{totalKonten}</h3>
                   <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mt-2">Konten Berita</p>
                 </div>
               </div>

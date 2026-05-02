@@ -101,7 +101,7 @@ export function AcademicSection() {
         <div>
           {/* Section header */}
           <FadeIn className="text-center mb-12 space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary">
+            <div className="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-4 py-1.5 text-sm font-semibold text-green-600 dark:text-green-400">
               <BookOpen className="w-4 h-4" />
               Keunggulan Kami
             </div>
@@ -116,9 +116,9 @@ export function AcademicSection() {
           {/* Program list — 2 or 3 columns */}
           <FadeInStagger faster className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {programUnggulan.map((item, i) => (
-              <FadeIn key={i} whileHover={{ y: -4, scale: 1.02 }} className="flex items-start gap-4 rounded-2xl border border-border/60 bg-secondary/30 backdrop-blur-sm p-5 shadow-sm hover:border-primary/40 hover:shadow-lg transition-all duration-300 cursor-default">
-                <span className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center">
-                  <CheckCircle2 className="w-4 h-4 text-primary" />
+              <FadeIn key={i} whileHover={{ y: -4, scale: 1.02 }} className="flex items-start gap-4 rounded-2xl border border-border/60 bg-secondary/30 backdrop-blur-sm p-5 shadow-sm hover:border-green-500/40 hover:shadow-lg transition-all duration-300 cursor-default">
+                <span className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-full bg-green-500/15 dark:bg-green-500/20 flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
                 </span>
                 <span className="font-medium leading-snug text-foreground/90">{item}</span>
               </FadeIn>
@@ -152,10 +152,10 @@ export function AcademicSection() {
           {/* ── Kolom Kanan: Morning Activity + Konsep Pembelajaran ── */}
           <div className="space-y-10">
             {/* Morning Activity */}
-            <FadeIn className="rounded-2xl border border-amber-400/30 bg-amber-50/50 dark:bg-amber-900/10 p-6 space-y-4">
+            <FadeIn className="rounded-2xl border border-green-500/30 bg-green-500/10 dark:bg-green-500/5 p-6 space-y-4">
               <div className="flex items-center gap-3 mb-2">
-                <span className="flex items-center justify-center w-9 h-9 rounded-full bg-amber-400/20">
-                  <Sun className="w-5 h-5 text-amber-500" />
+                <span className="flex items-center justify-center w-9 h-9 rounded-full bg-green-500/20">
+                  <Sun className="w-5 h-5 text-green-600 dark:text-green-400" />
                 </span>
                 <h3 className="text-xl font-extrabold tracking-tight text-foreground uppercase">
                   Morning Activity
@@ -164,8 +164,8 @@ export function AcademicSection() {
               <FadeInStagger faster className="grid grid-cols-2 gap-3">
                 {morningActivity.map((act, i) => (
                   <FadeIn key={i}>
-                    <div className="flex items-center gap-2.5 rounded-xl border border-amber-300/40 bg-amber-400/10 px-3 py-2.5">
-                      <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                    <div className="flex items-center gap-2.5 rounded-xl border border-green-500/20 bg-green-500/10 px-3 py-2.5">
+                      <span className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-400 shrink-0" />
                       <span className="text-sm font-semibold text-foreground/80">{act}</span>
                     </div>
                   </FadeIn>

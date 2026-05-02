@@ -33,7 +33,7 @@ function getInitials(nama: string) {
 
 function AvatarFallback({ nama }: { nama: string }) {
   return (
-    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-bold text-lg">
+    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-500/20 to-green-500/40 text-green-700 dark:text-green-400 font-bold text-lg">
       {getInitials(nama)}
     </div>
   );
@@ -41,9 +41,9 @@ function AvatarFallback({ nama }: { nama: string }) {
 
 function GuruCard({ guru }: { guru: (typeof guruList)[0] }) {
   return (
-    <div className="group flex flex-row items-center gap-4 rounded-2xl border border-border/60 bg-background/70 backdrop-blur-sm p-4 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02] hover:border-primary/30">
+    <div className="group flex flex-row items-center gap-4 rounded-2xl border border-border/60 bg-background/70 backdrop-blur-sm p-4 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02] hover:border-green-500/30">
       {/* Foto */}
-      <div className="relative shrink-0 w-16 h-16 rounded-full overflow-hidden ring-2 ring-border group-hover:ring-primary/50 transition-all duration-300">
+      <div className="relative shrink-0 w-16 h-16 rounded-full overflow-hidden ring-2 ring-border group-hover:ring-green-500/50 transition-all duration-300">
         <Image
           src={guru.image}
           alt={guru.nama}
@@ -59,7 +59,7 @@ function GuruCard({ guru }: { guru: (typeof guruList)[0] }) {
 
       {/* Teks */}
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors duration-200">
+        <p className="font-semibold text-sm text-foreground leading-tight line-clamp-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-200">
           {guru.nama}
         </p>
         <p className="text-xs text-muted-foreground mt-1 font-medium">{guru.jabatan}</p>
@@ -80,7 +80,7 @@ export function ManajemenSekolah() {
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         {/* Header */}
         <FadeIn className="text-center mb-16 space-y-4">
-          <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+          <div className="inline-flex items-center rounded-full border border-green-500/30 bg-green-500/10 px-4 py-1.5 text-sm font-medium text-green-600 dark:text-green-400">
             Tim Pengajar
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
