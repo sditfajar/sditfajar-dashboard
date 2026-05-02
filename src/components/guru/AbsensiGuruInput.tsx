@@ -1,15 +1,49 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { format, differenceInMinutes, startOfWeek, endOfWeek, addDays, isWeekend } from "date-fns";
+import { id } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { MapPin, CheckCircle2, AlertCircle, Loader2, LogIn, LogOut, ShieldCheck } from "lucide-react";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import {
+  MapPin,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  LogIn,
+  LogOut,
+  ShieldCheck,
+  History
+} from "lucide-react";
 import { toast } from "sonner";
-import { getTodayAttendance, recordAbsenMasuk, recordAbsenPulang } from "@/lib/firebase/guru-absensi";
+import {
+  recordAbsenMasuk,
+  recordAbsenPulang,
+  TeacherAttendance
+} from "@/lib/firebase/guru-absensi";
 import { SuccessDialog } from "@/components/ui/success-dialog";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  Timestamp
+} from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
 
 // KOORDINAT SEKOLAH SDIT Fajar
@@ -18,6 +52,18 @@ const SCHOOL_LNG = 106.8654741102322;
 
 // Radius 200 Meter
 const MAX_DISTANCE_KM = 0.2;
+
+// JADWAL KERJA GURU (Bisa diubah di sini)
+const WORK_SCHEDULE = {
+  MASUK: { hour: 7, minute: 0 },
+  PULANG: { hour: 15, minute: 0 },
+};
+
+// Helper untuk cek keterlambatan
+const checkIsLate = (date: Date) => {
+  const { hour, minute } = WORK_SCHEDULE.MASUK;
+  return date.getHours() > hour || (date.getHours() === hour && date.getMinutes() > minute);
+};
 
 type AbsenPhase = "loading" | "masuk" | "pulang" | "selesai";
 
@@ -52,6 +98,11 @@ export function AbsensiGuruInput() {
   const [masukTime, setMasukTime] = useState<Date | null>(null);
   const [pulangTime, setPulangTime] = useState<Date | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [history, setHistory] = useState<TeacherAttendance[]>([]);
+  
+  // Generate 7 days of current week (Monday to Sunday)
+  const startOfCurrentWeek = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfCurrentWeek, i));
 
   useEffect(() => {
     setCurrentTime(new Date());
@@ -87,39 +138,88 @@ export function AbsensiGuruInput() {
     return () => unsubscribe();
   }, []);
 
-  // Check today's attendance status on mount + when user is known
-  const checkTodayStatus = useCallback(async (uid: string) => {
-    try {
-      const todayDoc = await getTodayAttendance(uid);
-      if (!todayDoc) {
-        setPhase("masuk");
-      } else if (todayDoc.waktu_masuk && !todayDoc.waktu_pulang) {
-        setPhase("pulang");
-        if (todayDoc.waktu_masuk instanceof Date) {
-          setMasukTime(todayDoc.waktu_masuk);
-        }
-      } else if (todayDoc.waktu_masuk && todayDoc.waktu_pulang) {
-        setPhase("selesai");
-        if (todayDoc.waktu_masuk instanceof Date) {
-          setMasukTime(todayDoc.waktu_masuk);
-        }
-        if (todayDoc.waktu_pulang instanceof Date) {
-          setPulangTime(todayDoc.waktu_pulang);
-        }
-      } else {
-        setPhase("masuk");
-      }
-    } catch (error) {
-      console.error("Error checking today's attendance:", error);
-      setPhase("masuk");
-    }
-  }, []);
 
   useEffect(() => {
     if (currentUser) {
-      checkTodayStatus(currentUser.uid);
+      // Real-time listener for history (and deriving today's status)
+      const now = new Date();
+      const startOfCurrentWeek = startOfWeek(now, { weekStartsOn: 1 });
+      const endOfCurrentWeek = endOfWeek(now, { weekStartsOn: 1 });
+      const todayStr = format(now, "yyyy-MM-dd");
+
+      // Simplify query to only use UID to avoid missing index errors
+      // and handle real-time updates more reliably.
+      const q = query(
+        collection(db, "absensi_guru"),
+        where("uid", "==", currentUser.uid)
+      );
+
+      const unsubscribeHistory = onSnapshot(q, (snapshot) => {
+        const allRecords = snapshot.docs.map(docSnap => {
+          const data = docSnap.data();
+
+          // Helper to convert Firestore timestamp to Date safely
+          const toDate = (val: any) => val instanceof Timestamp ? val.toDate() : val;
+
+          return {
+            ...data,
+            id: docSnap.id,
+            waktu_masuk: toDate(data.waktu_masuk),
+            waktu_pulang: toDate(data.waktu_pulang),
+            timestamp: toDate(data.timestamp),
+          } as TeacherAttendance;
+        });
+
+        // Filter for current week and sort by newest first
+        const records = allRecords
+          .filter(r => {
+            // Include if timestamp is within current week
+            if (r.timestamp) {
+              return r.timestamp >= startOfCurrentWeek && r.timestamp <= endOfCurrentWeek;
+            }
+            return false;
+          })
+          .sort((a, b) => {
+            // Sort by timestamp if available, else fallback to dateString + ID
+            const getTime = (val: any) => {
+              if (val instanceof Date) return val.getTime();
+              if (val && typeof val.toMillis === 'function') return val.toMillis();
+              return 0;
+            };
+            const timeA = getTime(a.timestamp);
+            const timeB = getTime(b.timestamp);
+            if (timeA !== timeB) return timeB - timeA;
+            return (b.dateString || "").localeCompare(a.dateString || "");
+          });
+
+        setHistory(records);
+
+        // Derive today's status from all records (more robust)
+        const todayRecord = allRecords.find(r => r.dateString === todayStr);
+        if (!todayRecord) {
+          setPhase("masuk");
+          setMasukTime(null);
+          setPulangTime(null);
+        } else if (todayRecord.waktu_masuk && !todayRecord.waktu_pulang) {
+          setPhase("pulang");
+          setMasukTime(todayRecord.waktu_masuk);
+          setPulangTime(null);
+        } else if (todayRecord.waktu_masuk && todayRecord.waktu_pulang) {
+          setPhase("selesai");
+          setMasukTime(todayRecord.waktu_masuk);
+          setPulangTime(todayRecord.waktu_pulang);
+        } else {
+          setPhase("masuk");
+        }
+      }, (error) => {
+        console.error("Error listening to history:", error);
+        toast.error("Gagal Memuat Data", { description: "Terjadi kesalahan saat memantau riwayat absensi." });
+        setPhase("masuk"); // Fallback
+      });
+
+      return () => unsubscribeHistory();
     }
-  }, [currentUser, checkTodayStatus]);
+  }, [currentUser]);
 
   const checkLocation = () => {
     setIsLocating(true);
@@ -164,6 +264,11 @@ export function AbsensiGuruInput() {
   }, []);
 
   const handleAbsen = async () => {
+    if (isWeekend(new Date())) {
+      toast.error("Hari Libur", { description: "Anda tidak dapat melakukan absensi pada hari Sabtu atau Minggu." });
+      return;
+    }
+
     if (!currentUser) {
       toast.error("Sesi Login Tidak Ditemukan", { description: "Silakan login ulang." });
       return;
@@ -188,8 +293,6 @@ export function AbsensiGuruInput() {
     try {
       if (phase === "masuk") {
         await recordAbsenMasuk(currentUser.uid, teacherName, distanceKm, userLocation.lat, userLocation.lng);
-        setPhase("pulang");
-        setMasukTime(new Date());
         setSuccessPopup({
           open: true,
           title: "Absen Masuk Berhasil! 🟢",
@@ -197,8 +300,6 @@ export function AbsensiGuruInput() {
         });
       } else if (phase === "pulang") {
         await recordAbsenPulang(currentUser.uid);
-        setPhase("selesai");
-        setPulangTime(new Date());
         setSuccessPopup({
           open: true,
           title: "Absen Pulang Berhasil! 🔵",
@@ -213,9 +314,11 @@ export function AbsensiGuruInput() {
     }
   };
 
+  const isTodayWeekend = isWeekend(new Date());
   const isOutOfRange = distanceKm !== null && distanceKm > MAX_DISTANCE_KM;
   const isComplete = phase === "selesai";
-  const isButtonDisabled = isLocating || !!locationError || isOutOfRange || isSubmitting || isComplete || phase === "loading";
+  const isButtonDisabled = isLocating || !!locationError || isOutOfRange || isSubmitting || isComplete || phase === "loading" || isTodayWeekend;
+
 
 
 
@@ -321,6 +424,14 @@ export function AbsensiGuruInput() {
             )}
           </div>
 
+          {isTodayWeekend && (
+            <div className="flex justify-center mb-2">
+              <Badge variant="destructive" className="px-4 py-1.5 text-sm font-semibold animate-pulse">
+                Status: Hari Sabtu/Minggu Libur
+              </Badge>
+            </div>
+          )}
+
           <div className="flex flex-col w-full gap-4">
             <Button
               className={`w-full transition-all duration-300 ${phase === "masuk" && !isButtonDisabled ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg" : ""}`}
@@ -361,6 +472,88 @@ export function AbsensiGuruInput() {
           )}
         </CardFooter>
       </Card>
+      <div className="mt-8 space-y-4">
+        <Card className="shadow-md">
+          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-3">
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <History className="w-5 h-5 text-primary" />
+                Kehadiran Minggu Ini
+              </CardTitle>
+              <CardDescription>
+                Riwayat absensi Anda dari {format(startOfWeek(new Date(), { weekStartsOn: 1 }), "dd/MM/yyyy")} sampai {format(endOfWeek(new Date(), { weekStartsOn: 1 }), "dd/MM/yyyy")}
+              </CardDescription>
+            </div>
+            <Link href="/riwayat" passHref>
+              <Button variant="outline" className="w-full md:w-auto h-auto font-normal">
+                Lihat Riwayat Bulanan
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="min-w-[160px]">Hari/Tanggal</TableHead>
+                    <TableHead>Masuk</TableHead>
+                    <TableHead>Keluar</TableHead>
+                    <TableHead className="text-right">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {weekDays.map((day) => {
+                    const dateStr = format(day, "yyyy-MM-dd");
+                    const record = history.find(r => r.dateString === dateStr);
+                    const isSaturday = day.getDay() === 6;
+                    const isSunday = day.getDay() === 0;
+                    const isWeekend = isSaturday || isSunday;
+
+                    return (
+                      <TableRow 
+                        key={dateStr} 
+                        className={isWeekend ? "bg-red-500/5 dark:bg-red-900/10" : ""}
+                      >
+                        <TableCell className="font-medium whitespace-nowrap">
+                          {format(day, "EEEE, dd/MM/yyyy", { locale: id })}
+                        </TableCell>
+                        <TableCell>
+                          {record?.waktu_masuk ? format(record.waktu_masuk, "HH:mm") : "—"}
+                        </TableCell>
+                        <TableCell>
+                          {record?.waktu_pulang ? (
+                            format(record.waktu_pulang, "HH:mm")
+                          ) : record?.waktu_masuk ? (
+                            <span className="text-muted-foreground text-xs italic">Belum Pulang</span>
+                          ) : "—"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {record?.waktu_masuk ? (
+                            (() => {
+                              const telat = checkIsLate(record.waktu_masuk);
+                              return (
+                                <Badge className={telat ? "bg-yellow-500 hover:bg-yellow-600" : "bg-green-500 hover:bg-green-600"}>
+                                  {telat ? "Telat" : "Tepat Waktu"}
+                                </Badge>
+                              );
+                            })()
+                          ) : (
+                            isWeekend ? (
+                              <Badge variant="outline" className="text-muted-foreground bg-muted/50 border-none font-normal">
+                                Libur
+                              </Badge>
+                            ) : "—"
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <SuccessDialog
         open={successPopup.open}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Calendar as CalendarIcon, Download, Search, Loader2, X } from "lucide-react";
+import { Calendar as CalendarIcon, Download, Search, Loader2, X, Trash2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -21,10 +21,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
-
 import {
   collection,
   query,
@@ -32,6 +42,9 @@ import {
   orderBy,
   Timestamp,
   onSnapshot,
+  getDocs,
+  writeBatch,
+  doc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { TeacherAttendance } from "@/lib/firebase/guru-absensi";
@@ -46,24 +59,31 @@ export function AbsensiGuruLaporan() {
     from: new Date(),
     to: new Date(),
   });
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [resetConfirmationText, setResetConfirmationText] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
 
   // Real-time listener using onSnapshot
   useEffect(() => {
     setIsLoading(true);
 
-    let q = query(collection(db, COLLECTION_NAME), orderBy("timestamp", "desc"));
-
+    const constraints = [];
+    
     if (date?.from) {
       const start = new Date(date.from);
       start.setHours(0, 0, 0, 0);
-      q = query(q, where("timestamp", ">=", Timestamp.fromDate(start)));
+      constraints.push(where("timestamp", ">=", Timestamp.fromDate(start)));
     }
 
     if (date?.to) {
       const end = new Date(date.to);
       end.setHours(23, 59, 59, 999);
-      q = query(q, where("timestamp", "<=", Timestamp.fromDate(end)));
+      constraints.push(where("timestamp", "<=", Timestamp.fromDate(end)));
     }
+
+    constraints.push(orderBy("timestamp", "desc"));
+
+    const q = query(collection(db, COLLECTION_NAME), ...constraints);
 
     const unsubscribe = onSnapshot(
       q,
@@ -115,7 +135,7 @@ export function AbsensiGuruLaporan() {
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Absensi Guru");
-    
+
     let filename = "Laporan_Absensi_Guru";
     if (date?.from) {
       filename += `_${format(date.from, "ddMMyyyy")}`;
@@ -124,6 +144,45 @@ export function AbsensiGuruLaporan() {
       }
     }
     XLSX.writeFile(workbook, `${filename}.xlsx`);
+  };
+
+  const handleResetAllData = async () => {
+    if (resetConfirmationText !== "RESET") return;
+
+    setIsResetting(true);
+    try {
+      const q = query(collection(db, COLLECTION_NAME));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        toast.info("Data Kosong", { description: "Tidak ada data absensi untuk dihapus." });
+        setIsResetting(false);
+        setIsResetDialogOpen(false);
+        return;
+      }
+
+      const docs = snapshot.docs;
+      const batchSize = 500;
+
+      // Delete in batches of 500
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = writeBatch(db);
+        const chunk = docs.slice(i, i + batchSize);
+        chunk.forEach((docSnap) => {
+          batch.delete(docSnap.ref);
+        });
+        await batch.commit();
+      }
+
+      toast.success("Berhasil", { description: `${docs.length} data absensi telah dihapus secara permanen.` });
+      setResetConfirmationText("");
+      setIsResetDialogOpen(false);
+    } catch (error) {
+      console.error("Error resetting data:", error);
+      toast.error("Gagal", { description: "Terjadi kesalahan saat menghapus data." });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   const filteredData = data.filter((row) =>
@@ -204,10 +263,63 @@ export function AbsensiGuruLaporan() {
           </div>
         </div>
 
-        <Button variant="outline" onClick={handleExport} className="gap-2 w-full sm:w-auto bg-transparent border border-green-500 text-green-500 hover:bg-green-500 hover:text-white hover:shadow-[0_0_15px_rgba(34,197,94,0.5)] transition-all duration-300" disabled={filteredData.length === 0}>
-          <Download className="h-4 w-4" />
-          Export Excel
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={handleExport} className="gap-2 w-full sm:w-auto bg-transparent border border-green-500 text-green-500 hover:bg-green-500 hover:text-white hover:shadow-[0_0_15px_rgba(34,197,94,0.5)] transition-all duration-300" disabled={filteredData.length === 0}>
+            <Download className="h-4 w-4" />
+            Export Excel
+          </Button>
+
+          <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="gap-2 w-full sm:w-auto bg-red-500/10 text-red-500 border border-red-500 hover:bg-red-500 hover:text-white hover:shadow-[0_0_15px_rgba(239,68,68,0.5)] transition-all duration-300">
+                <Trash2 className="h-4 w-4" />
+                Reset Semua Data
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="max-w-md">
+              <AlertDialogHeader>
+                <div className="flex items-center gap-2 text-red-600 mb-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  <AlertDialogTitle>Hapus Semua Data Absensi?</AlertDialogTitle>
+                </div>
+                <AlertDialogDescription className="space-y-3">
+                  <p className="font-semibold text-foreground">Tindakan ini tidak bisa dibatalkan.</p>
+                  <p>Semua riwayat absensi guru di dalam sistem akan dihapus secara permanen dari database.</p>
+                  <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-md border border-red-100 dark:border-red-900/50 text-red-700 dark:text-red-400 text-sm">
+                    Ketik <strong>RESET</strong> di bawah ini untuk mengonfirmasi:
+                  </div>
+                  <Input
+                    placeholder="Ketik RESET untuk konfirmasi"
+                    value={resetConfirmationText}
+                    onChange={(e) => setResetConfirmationText(e.target.value)}
+                    className="mt-2"
+                  />
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="mt-4">
+                <AlertDialogCancel onClick={() => setResetConfirmationText("")}>Batal</AlertDialogCancel>
+                <Button
+                  variant="destructive"
+                  onClick={handleResetAllData}
+                  disabled={resetConfirmationText !== "RESET" || isResetting}
+                  className="gap-2"
+                >
+                  {isResetting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Menghapus...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      Hapus Permanen
+                    </>
+                  )}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       <div className="border rounded-lg overflow-hidden bg-background">
@@ -285,16 +397,16 @@ export function AbsensiGuruLaporan() {
                       </TableCell>
                       <TableCell>
                         <span className={cn(
-                          "font-medium", 
+                          "font-medium",
                           row.distance <= 0.1 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                         )}>
                           {(row.distance * 1000).toFixed(0)}m
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <a 
-                          href={`https://www.google.com/maps/search/?api=1&query=${row.latitude},${row.longitude}`} 
-                          target="_blank" 
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${row.latitude},${row.longitude}`}
+                          target="_blank"
                           rel="noreferrer"
                           className="text-blue-600 hover:underline text-sm font-medium"
                         >
