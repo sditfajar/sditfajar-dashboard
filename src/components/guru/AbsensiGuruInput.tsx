@@ -484,11 +484,6 @@ export function AbsensiGuruInput() {
                 Riwayat absensi Anda dari {format(startOfWeek(new Date(), { weekStartsOn: 1 }), "dd/MM/yyyy")} sampai {format(endOfWeek(new Date(), { weekStartsOn: 1 }), "dd/MM/yyyy")}
               </CardDescription>
             </div>
-            <Link href="/riwayat" passHref>
-              <Button variant="outline" className="w-full md:w-auto h-auto font-normal">
-                Lihat Riwayat Bulanan
-              </Button>
-            </Link>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border overflow-x-auto">
@@ -552,6 +547,14 @@ export function AbsensiGuruInput() {
               </Table>
             </div>
           </CardContent>
+          <CardFooter className="border-t pt-4">
+            <Link href="/riwayat" passHref className="w-full">
+              <Button variant="outline" className="w-full gap-2 font-normal">
+                <History className="h-4 w-4" />
+                Lihat Riwayat Bulanan
+              </Button>
+            </Link>
+          </CardFooter>
         </Card>
       </div>
 

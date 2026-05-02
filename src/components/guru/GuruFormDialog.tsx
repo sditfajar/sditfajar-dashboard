@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebase/config";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -27,28 +31,17 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, User } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Camera, Upload } from "lucide-react";
 
 const toTitleCase = (str: string) =>
   str.replace(/\b\w/g, (char) => char.toUpperCase());
 
-const getDriveDirectLink = (url: string) => {
-  if (!url) return "";
-  if (url.includes("/file/d/")) {
-    const match = url.match(/\/file\/d\/([^/]+)/);
-    if (match && match[1]) {
-      return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-    }
-  }
-  return url;
-};
 
 const formSchema = z.object({
   name: z.string().min(1, "Nama lengkap wajib diisi"),
   nip: z.string().optional(),
-  photoURL: z.string().url("URL Foto tidak valid").optional().or(z.literal("")),
-  drivePhotoURL: z.string().optional(),
+  photoURL: z.string().optional().or(z.literal("")),
   gender: z.enum(["L", "P"], { message: "Pilih jenis kelamin" }),
   position: z.string().min(1, "Posisi wajib diisi"),
   classTeacher: z.string().optional(),
@@ -84,7 +77,6 @@ export function GuruFormDialog({
       name: "",
       nip: "",
       photoURL: "",
-      drivePhotoURL: "",
       gender: "L",
       position: "",
       classTeacher: "",
@@ -96,13 +88,18 @@ export function GuruFormDialog({
     },
   });
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+
   useEffect(() => {
     if (open && defaultValues) {
       form.reset({
         name: defaultValues.name || "",
         nip: defaultValues.nip || "",
         photoURL: defaultValues.photoURL || "",
-        drivePhotoURL: defaultValues.photoURL?.includes("drive.google.com") ? defaultValues.photoURL : "",
         gender: defaultValues.gender || "L",
         position: defaultValues.position || "",
         classTeacher: defaultValues.classTeacher || "",
@@ -112,19 +109,83 @@ export function GuruFormDialog({
         password: "", // Jangan tampilkan password lama
         status: defaultValues.status || "Aktif",
       });
+      setPreviewUrl(defaultValues.photoURL || null);
     } else if (!open) {
       form.reset();
+      setPreviewUrl(null);
+      setSelectedFile(null);
+      setUploadProgress(0);
+      setUploadedUrl(null);
     }
   }, [open, defaultValues, form]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File terlalu besar", { description: "Maksimal ukuran file adalah 5MB." });
+        e.target.value = ""; // Reset input
+        return;
+      }
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      setUploadedUrl(null); // Reset URL lama
+      
+      // Langsung upload di background agar cepat
+      uploadImage(file).then(downloadUrl => {
+        setUploadedUrl(downloadUrl);
+      }).catch(() => {
+        // Error sudah dihandle di uploadImage
+      });
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      
+      const fileName = `${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, `profil-guru/${fileName}`);
+      
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      return new Promise((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+            setUploadProgress(progress);
+          },
+          (error: any) => {
+            console.error("Upload error:", error);
+            let errorMessage = "Gagal mengunggah gambar.";
+            if (error.code === 'storage/unauthorized') {
+              errorMessage = "Akses ditolak. Cek Firebase Storage Rules Anda.";
+            }
+            toast.error("Upload Gagal", { description: errorMessage });
+            setIsUploading(false);
+            reject(error);
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            setIsUploading(false);
+            resolve(downloadURL);
+          }
+        );
+      });
+    } catch (error: any) {
+      console.error("Upload process error:", error);
+      setIsUploading(false);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (values: GuruFormValues) => {
     const data = { ...values };
-    
-    // Convert Google Drive link if provided
-    if (data.drivePhotoURL) {
-      data.photoURL = getDriveDirectLink(data.drivePhotoURL);
-    }
-    
+
     if (!isEditing && (!data.password || data.password.length < 6)) {
       form.setError("password", { message: "Password minimal 6 karakter untuk guru baru" });
       return;
@@ -133,11 +194,29 @@ export function GuruFormDialog({
       form.setError("password", { message: "Password minimal 6 karakter" });
       return;
     }
-    
-    // Remove drivePhotoURL before submitting to Firestore if your API doesn't expect it
-    // but here we just pass the modified data
-    await onSubmit(data);
-    form.reset();
+
+    try {
+      // Jika sudah ada URL hasil upload background, gunakan itu
+      if (selectedFile && uploadedUrl) {
+        data.photoURL = uploadedUrl;
+      } 
+      // Jika belum ada tapi ada file, lakukan upload (atau tunggu jika sedang jalan)
+      else if (selectedFile) {
+        const url = await uploadImage(selectedFile);
+        data.photoURL = url;
+      }
+
+      await onSubmit(data);
+      form.reset();
+      setPreviewUrl(null);
+      setSelectedFile(null);
+      setUploadProgress(0);
+      setUploadedUrl(null);
+      toast.success("Berhasil", { description: `Data guru ${isEditing ? 'diperbarui' : 'berhasil disimpan'}.` });
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast.error("Gagal Menyimpan", { description: "Terjadi kesalahan saat menyimpan data ke database." });
+    }
   };
 
   return (
@@ -290,51 +369,50 @@ export function GuruFormDialog({
             />
 
             <div className="md:col-span-2 flex flex-col md:flex-row items-center gap-6 p-4 bg-muted/30 rounded-xl border border-dashed border-primary/20">
-              <Avatar className="h-20 w-20 border-2 border-background shadow-md">
-                <AvatarImage src={form.watch("drivePhotoURL") ? getDriveDirectLink(form.watch("drivePhotoURL")!) : form.watch("photoURL")} className="object-cover" />
-                <AvatarFallback className="bg-primary/5">
-                  <User className="h-10 w-10 text-primary/40" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 space-y-4 w-full">
-                <FormField
-                  control={form.control}
-                  name="drivePhotoURL"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-semibold text-primary uppercase tracking-wider">Link Foto Google Drive</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="https://drive.google.com/file/d/..." 
-                          {...field} 
-                          className="bg-background"
-                        />
-                      </FormControl>
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        * Pastikan akses file diatur ke <strong>"Siapa saja yang memiliki link"</strong>
-                      </p>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex items-center gap-2">
-                  <div className="h-px flex-1 bg-border" />
-                  <span className="text-[10px] text-muted-foreground uppercase font-medium">Atau</span>
-                  <div className="h-px flex-1 bg-border" />
+              <div className="relative group">
+                <Avatar className="h-24 w-24 border-4 border-background shadow-lg transition-transform group-hover:scale-105">
+                  <AvatarImage src={previewUrl || ""} className="object-cover" />
+                  <AvatarFallback className="bg-primary/5">
+                    <Camera className="h-10 w-10 text-primary/40" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <Camera className="h-6 w-6 text-white" />
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={handleFileChange}
+                  />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="photoURL"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">URL Foto Langsung (Firebase/Lainnya)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://..." {...field} className="bg-background h-8 text-xs" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+              </div>
+
+              <div className="flex-1 space-y-2 w-full text-center md:text-left">
+                <h4 className="text-sm font-semibold text-primary uppercase tracking-wider">Foto Profil</h4>
+                <p className="text-xs text-muted-foreground">
+                  Unggah foto guru dengan format JPG, PNG, atau WebP. Ukuran akan dioptimalkan secara otomatis.
+                </p>
+                <div className="relative mt-4">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="photo-upload"
+                  />
+                  <label
+                    htmlFor="photo-upload"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-background border rounded-lg text-xs font-medium cursor-pointer hover:bg-muted/50 transition-colors"
+                  >
+                    <Upload className="h-3 w-3" />
+                    {selectedFile ? "Ganti Foto" : "Pilih Foto Guru"}
+                  </label>
+                  {selectedFile && (
+                    <span className="ml-3 text-[10px] text-green-600 font-medium animate-in fade-in">
+                      ✓ {selectedFile.name}
+                    </span>
                   )}
-                />
+                </div>
               </div>
             </div>
 
@@ -371,9 +449,9 @@ export function GuruFormDialog({
             />
 
             <div className="md:col-span-2 flex justify-end pt-4">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLoading ? "Menyimpan..." : (isEditing ? "Simpan Perubahan" : "Simpan Guru")}
+              <Button type="submit" disabled={isLoading || isUploading}>
+                {(isLoading || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isUploading ? `Mengunggah ${uploadProgress}%` : (isLoading ? "Menyimpan..." : (isEditing ? "Simpan Perubahan" : "Simpan Guru"))}
               </Button>
             </div>
           </form>
