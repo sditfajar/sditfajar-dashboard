@@ -57,7 +57,7 @@ const SEMESTER = ["Ganjil", "Genap"];
 export default function RekapTagihanPage() {
   const [dataRekap, setDataRekap] = useState<(Siswa & { keuangan: Keuangan })[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [selectedKelas, setSelectedKelas] = useState<string>("semua");
   const [selectedStatus, setSelectedStatus] = useState<string>("semua");
 
@@ -113,7 +113,7 @@ export default function RekapTagihanPage() {
   };
 
   const getTunggakanList = (keuangan: Keuangan) => {
-    const tunggakan = [];
+    const tunggakan: string[] = [];
     keuangan.tagihanBulanan?.forEach(tb => {
       if (tb.status === "Belum Lunas") tunggakan.push(`Bulan ${tb.bulan}`);
     });
@@ -126,7 +126,7 @@ export default function RekapTagihanPage() {
   const createWhatsAppLink = (siswa: Siswa, keuangan: Keuangan) => {
     const waNumber = formatWhatsAppNumber(siswa.whatsappOrtu);
     if (!waNumber) return "#";
-    
+
     const tunggakan = getTunggakanList(keuangan);
     const tunggakanText = tunggakan.length > 0 ? tunggakan.map(t => `- ${t}`).join("\n") : "tidak ada";
 
@@ -139,10 +139,10 @@ export default function RekapTagihanPage() {
   const filteredData = useMemo(() => {
     return dataRekap.filter(d => {
       const matchKelas = selectedKelas === "semua" || d.kelas === selectedKelas;
-      
+
       const tunggakan = getTunggakanList(d.keuangan);
       const isLunasSemua = tunggakan.length === 0;
-      
+
       let matchStatus = true;
       if (selectedStatus === "lunas_semua") matchStatus = isLunasSemua;
       if (selectedStatus === "ada_tunggakan") matchStatus = !isLunasSemua;
@@ -217,7 +217,7 @@ export default function RekapTagihanPage() {
                     const k = d.keuangan;
                     const waLink = createWhatsAppLink(d, k);
                     const formattedWa = formatWhatsAppNumber(d.whatsappOrtu);
-                    
+
                     return (
                       <TableRow key={d.id} className="hover:bg-muted/30">
                         <TableCell className="font-medium sticky left-0 bg-background/95 backdrop-blur z-10 w-[200px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
@@ -225,9 +225,9 @@ export default function RekapTagihanPage() {
                         </TableCell>
                         <TableCell>
                           {d.whatsappOrtu ? (
-                            <a 
-                              href={waLink} 
-                              target="_blank" 
+                            <a
+                              href={waLink}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="text-green-600 hover:text-green-700 hover:underline transition-colors font-medium flex items-center gap-1"
                               title="Kirim Pesan WhatsApp"
@@ -239,7 +239,7 @@ export default function RekapTagihanPage() {
                           )}
                         </TableCell>
                         <TableCell>{d.kelas || "-"}</TableCell>
-                        
+
                         {BULAN_AKADEMIK.map(bulan => {
                           const tb = k.tagihanBulanan?.find(t => t.bulan === bulan);
                           const isLunas = tb?.status === "Lunas";
