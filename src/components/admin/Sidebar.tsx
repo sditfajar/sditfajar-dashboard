@@ -43,6 +43,7 @@ export const adminLinks: NavItem[] = [
     children: [
       { name: "SPP Bulanan", href: "/keuangan/spp-bulanan" },
       { name: "Tagihan Semester", href: "/keuangan/semester" },
+      { name: "Rekap Tagihan", href: "/keuangan/rekap" },
       { name: "Riwayat", href: "/keuangan/riwayat" },
     ],
   },

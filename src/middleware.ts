@@ -30,7 +30,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard-guru', request.url));
   }
 
-  if (session && request.nextUrl.pathname === '/login') {
+  if (session && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/')) {
     if (userRole === 'teacher') {
       return NextResponse.redirect(new URL('/dashboard-guru', request.url));
     }
@@ -42,6 +42,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/',
     '/admin/:path*',
     '/siswa/:path*',
     '/guru/:path*',
