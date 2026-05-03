@@ -62,13 +62,7 @@ export const adminLinks: NavItem[] = [
       { name: "Formulir Website", href: "/ppdb" },
     ],
   },
-  {
-    name: "Manajemen Konten",
-    icon: Newspaper,
-    children: [
-      { name: "Konten", href: "/konten" },
-    ],
-  },
+  { name: "Manajemen Konten", href: "/konten", icon: Newspaper },
   { name: "Pesan Kontak", href: "/pesan", icon: MessageSquare },
   { name: "Nilai", icon: ClipboardEdit, disabled: true },
   { name: "Setting", icon: Settings, disabled: true },

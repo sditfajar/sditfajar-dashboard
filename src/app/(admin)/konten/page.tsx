@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import imageCompression from "browser-image-compression";
@@ -126,6 +127,26 @@ export default function KontenPage() {
     },
   });
 
+  const newsChartData = useMemo(() => {
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+      "Jul", "Agu", "Sep", "Okt", "Nov", "Des"
+    ];
+    const counts = months.map(m => ({ name: m, count: 0 }));
+
+    data.forEach(item => {
+      if (item.tanggal) {
+        const date = new Date(item.tanggal);
+        const monthIdx = date.getMonth();
+        if (monthIdx >= 0 && monthIdx < 12) {
+          counts[monthIdx].count++;
+        }
+      }
+    });
+
+    return counts;
+  }, [data]);
+
   const loadData = async () => {
     setIsLoading(true);
     try {
@@ -246,8 +267,9 @@ export default function KontenPage() {
             Kelola berita dan informasi yang tampil di halaman utama website.
           </p>
         </div>
-        <Link 
-          href="/#berita" 
+        <Link
+          // Button Lihat berita 
+          href="/#berita"
           target="_blank"
           className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 shrink-0"
         >
@@ -255,11 +277,10 @@ export default function KontenPage() {
         </Link>
       </FadeIn>
 
-      {/* ── Grid Utama 1 kolom HP / 2 kolom Laptop ─────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-        {/* ── Kolom Kiri: Action Cards ── */}
-        <FadeInStagger className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-4">
+      {/* ── Grid Utama ─────────────────── */}
+      <div className="flex flex-col gap-6 mb-6">
+        {/* ── Baris Atas: Action Cards ── */}
+        <FadeInStagger className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {/* Tambah Konten Card */}
           <FadeIn>
             <button
@@ -320,54 +341,97 @@ export default function KontenPage() {
           </FadeIn>
         </FadeInStagger>
 
-        {/* ── Kolom Kanan: Form YouTube ── */}
-        <FadeIn>
-          <div className="rounded-xl border bg-card p-5 space-y-4 h-full">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30">
-                <Youtube className="h-4 w-4 text-red-600" />
+        {/* ── Baris Bawah: Statistik Konten & Form YouTube ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <FadeIn className="lg:col-span-2">
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 h-full flex flex-col justify-between min-h-[300px]">
+              <div className="flex-1 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={newsChartData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.2)" />
+                    <XAxis 
+                      dataKey="name" 
+                      fontSize={12} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      stroke="hsl(var(--muted-foreground))" 
+                    />
+                    <YAxis
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      stroke="hsl(var(--muted-foreground))"
+                      allowDecimals={false}
+                    />
+                    <RechartsTooltip
+                      cursor={{ fill: 'rgba(34, 197, 94, 0.1)' }}
+                      contentStyle={{ borderRadius: "8px", border: "1px solid rgba(34, 197, 94, 0.2)" }}
+                      formatter={(value: any) => [value + " Berita", "Jumlah"]}
+                    />
+                    <Bar 
+                      dataKey="count" 
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]} 
+                      barSize={40}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
+            </div>
+          </FadeIn>
+
+          <FadeIn className="lg:col-span-1">
+            <div className="rounded-xl border bg-card p-5 space-y-4 h-full flex flex-col justify-between">
               <div>
-                <h2 className="font-semibold text-sm">Video Profil YouTube</h2>
-                <p className="text-xs text-muted-foreground">Perbarui link embed video event/profil sekolah.</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30">
+                    <Youtube className="h-4 w-4 text-red-600" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-sm">Video Profil YouTube</h2>
+                    <p className="text-xs text-muted-foreground">Perbarui link embed video event/profil sekolah.</p>
+                  </div>
+                </div>
+
+                {/* Preview iframe */}
+                <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-muted border mt-4">
+                  <iframe
+                    key={savedYoutubeUrl}
+                    className="absolute inset-0 w-full h-full"
+                    src={savedYoutubeUrl}
+                    title="Video Profil SDIT Fajar"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                {/* Input + Save */}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="https://www.youtube.com/watch?v=... atau embed URL"
+                    value={youtubeUrl}
+                    onChange={(e) => setYoutubeUrl(e.target.value)}
+                    className="flex-1 text-sm"
+                  />
+                  <Button
+                    onClick={handleSaveYoutube}
+                    disabled={isSavingYoutube || !youtubeUrl.trim()}
+                    className="gap-1.5 shrink-0"
+                    size="sm"
+                  >
+                    <Save className="h-4 w-4" />
+                    {isSavingYoutube ? "Menyimpan..." : "Simpan"}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Masukkan link YouTube biasa (watch) atau embed. Perubahan hanya berlaku sementara.
+                </p>
               </div>
             </div>
-
-            {/* Preview iframe */}
-            <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-muted border">
-              <iframe
-                key={savedYoutubeUrl}
-                className="absolute inset-0 w-full h-full"
-                src={savedYoutubeUrl}
-                title="Video Profil SDIT Fajar"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-
-            {/* Input + Save */}
-            <div className="flex gap-2">
-              <Input
-                placeholder="https://www.youtube.com/watch?v=... atau embed URL"
-                value={youtubeUrl}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                className="flex-1 text-sm"
-              />
-              <Button
-                onClick={handleSaveYoutube}
-                disabled={isSavingYoutube || !youtubeUrl.trim()}
-                className="gap-1.5 shrink-0"
-                size="sm"
-              >
-                <Save className="h-4 w-4" />
-                {isSavingYoutube ? "Menyimpan..." : "Simpan"}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Masukkan link YouTube biasa (watch) atau embed. Perubahan hanya berlaku sementara; tambahkan integrasi Firestore untuk menyimpan permanen.
-            </p>
-          </div>
-        </FadeIn>
+          </FadeIn>
+        </div>
       </div>
 
       {/* ── Tabel Konten (scrollable di mobile) ─────────────────────── */}

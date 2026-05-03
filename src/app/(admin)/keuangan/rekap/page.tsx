@@ -60,10 +60,27 @@ export default function RekapTagihanPage() {
 
   const [selectedKelas, setSelectedKelas] = useState<string>("semua");
   const [selectedStatus, setSelectedStatus] = useState<string>("semua");
+  const [selectedSemester, setSelectedSemester] = useState<string>("Ganjil");
 
   useEffect(() => {
+    const saved = localStorage.getItem("rekap_semester_filter");
+    if (saved === "Ganjil" || saved === "Genap") {
+      setSelectedSemester(saved);
+    } else {
+      const month = new Date().getMonth();
+      if (month >= 6) {
+        setSelectedSemester("Ganjil");
+      } else {
+        setSelectedSemester("Genap");
+      }
+    }
     fetchData();
   }, []);
+
+  const handleSemesterChange = (val: string) => {
+    setSelectedSemester(val);
+    localStorage.setItem("rekap_semester_filter", val);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -112,22 +129,30 @@ export default function RekapTagihanPage() {
     return formatted;
   };
 
-  const getTunggakanList = (keuangan: Keuangan) => {
+  const getTunggakanList = (keuangan: Keuangan, semester: string) => {
     const tunggakan: string[] = [];
+    const bulanVisible = semester === "Ganjil" 
+      ? ["Juli", "Agustus", "September", "Oktober", "November", "Desember"] 
+      : ["Januari", "Februari", "Maret", "April", "Mei", "Juni"];
+
     keuangan.tagihanBulanan?.forEach(tb => {
-      if (tb.status === "Belum Lunas") tunggakan.push(`Bulan ${tb.bulan}`);
+      if (tb.status === "Belum Lunas" && bulanVisible.includes(tb.bulan)) {
+        tunggakan.push(`Bulan ${tb.bulan}`);
+      }
     });
     keuangan.tagihanSemesteran?.forEach(ts => {
-      if (ts.status === "Belum Lunas") tunggakan.push(`Semester ${ts.semester}`);
+      if (ts.status === "Belum Lunas" && ts.semester === semester) {
+        tunggakan.push(`Semester ${ts.semester}`);
+      }
     });
     return tunggakan;
   };
 
-  const createWhatsAppLink = (siswa: Siswa, keuangan: Keuangan) => {
+  const createWhatsAppLink = (siswa: Siswa, keuangan: Keuangan, semester: string) => {
     const waNumber = formatWhatsAppNumber(siswa.whatsappOrtu);
     if (!waNumber) return "#";
 
-    const tunggakan = getTunggakanList(keuangan);
+    const tunggakan = getTunggakanList(keuangan, semester);
     const tunggakanText = tunggakan.length > 0 ? tunggakan.map(t => `- ${t}`).join("\n") : "tidak ada";
 
     // Template Pesan Sesuai Permintaan
@@ -140,7 +165,7 @@ export default function RekapTagihanPage() {
     return dataRekap.filter(d => {
       const matchKelas = selectedKelas === "semua" || d.kelas === selectedKelas;
 
-      const tunggakan = getTunggakanList(d.keuangan);
+      const tunggakan = getTunggakanList(d.keuangan, selectedSemester);
       const isLunasSemua = tunggakan.length === 0;
 
       let matchStatus = true;
@@ -149,7 +174,7 @@ export default function RekapTagihanPage() {
 
       return matchKelas && matchStatus;
     });
-  }, [dataRekap, selectedKelas, selectedStatus]);
+  }, [dataRekap, selectedKelas, selectedStatus, selectedSemester]);
 
   return (
     <div className="flex-1 min-w-0 w-full max-w-full space-y-4 md:p-2 pt-6 overflow-x-hidden">
@@ -167,6 +192,16 @@ export default function RekapTagihanPage() {
             <CardDescription>Menampilkan {filteredData.length} siswa.</CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Select value={selectedSemester} onValueChange={handleSemesterChange}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Pilih Semester" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Ganjil">Semester Ganjil</SelectItem>
+                <SelectItem value="Genap">Semester Genap</SelectItem>
+              </SelectContent>
+            </Select>
+
             <Select value={selectedKelas} onValueChange={setSelectedKelas}>
               <SelectTrigger className="w-full sm:w-[150px]">
                 <SelectValue placeholder="Pilih Kelas" />
@@ -204,19 +239,24 @@ export default function RekapTagihanPage() {
                     <TableHead className="sticky left-0 bg-muted/50 z-20 w-[200px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Nama Siswa</TableHead>
                     <TableHead>No. WA Wali</TableHead>
                     <TableHead>Kelas</TableHead>
-                    {BULAN_AKADEMIK.map(bulan => (
+                    {(selectedSemester === "Ganjil" 
+                      ? ["Juli", "Agustus", "September", "Oktober", "November", "Desember"] 
+                      : ["Januari", "Februari", "Maret", "April", "Mei", "Juni"]
+                    ).map(bulan => (
                       <TableHead key={bulan} className="text-center">{bulan}</TableHead>
                     ))}
-                    {SEMESTER.map(sem => (
-                      <TableHead key={sem} className="text-center">Sem. {sem}</TableHead>
-                    ))}
+                    <TableHead className="text-center">Sem. {selectedSemester}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredData.map((d) => {
                     const k = d.keuangan;
-                    const waLink = createWhatsAppLink(d, k);
+                    const waLink = createWhatsAppLink(d, k, selectedSemester);
                     const formattedWa = formatWhatsAppNumber(d.whatsappOrtu);
+                    
+                    const bulanVisible = selectedSemester === "Ganjil" 
+                      ? ["Juli", "Agustus", "September", "Oktober", "November", "Desember"] 
+                      : ["Januari", "Februari", "Maret", "April", "Mei", "Juni"];
 
                     return (
                       <TableRow key={d.id} className="hover:bg-muted/30">
@@ -240,7 +280,7 @@ export default function RekapTagihanPage() {
                         </TableCell>
                         <TableCell>{d.kelas || "-"}</TableCell>
 
-                        {BULAN_AKADEMIK.map(bulan => {
+                        {bulanVisible.map(bulan => {
                           const tb = k.tagihanBulanan?.find(t => t.bulan === bulan);
                           const isLunas = tb?.status === "Lunas";
                           return (
@@ -254,11 +294,11 @@ export default function RekapTagihanPage() {
                           )
                         })}
 
-                        {SEMESTER.map(sem => {
-                          const ts = k.tagihanSemesteran?.find(t => t.semester === sem);
+                        {(() => {
+                          const ts = k.tagihanSemesteran?.find(t => t.semester === selectedSemester);
                           const isLunas = ts?.status === "Lunas";
                           return (
-                            <TableCell key={sem} className="text-center border-l bg-muted/10">
+                            <TableCell className="text-center border-l bg-muted/10">
                               {isLunas ? (
                                 <div className="flex justify-center"><Check className="w-5 h-5 text-green-500" /></div>
                               ) : (
@@ -266,7 +306,7 @@ export default function RekapTagihanPage() {
                               )}
                             </TableCell>
                           )
-                        })}
+                        })()}
 
                       </TableRow>
                     );
