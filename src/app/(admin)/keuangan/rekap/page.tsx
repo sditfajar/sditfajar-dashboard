@@ -3,6 +3,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { db } from "@/lib/firebase/config";
 import { collection, getDocs } from "firebase/firestore";
+import * as XLSX from "xlsx";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -13,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Check, X } from "lucide-react";
+import { Loader2, Check, X, FileDown } from "lucide-react";
 
 interface Siswa {
   id: string;
@@ -176,6 +178,56 @@ export default function RekapTagihanPage() {
     });
   }, [dataRekap, selectedKelas, selectedStatus, selectedSemester]);
 
+  const exportToExcel = () => {
+    const bulanVisible = selectedSemester === "Ganjil" 
+      ? ["Juli", "Agustus", "September", "Oktober", "November", "Desember"] 
+      : ["Januari", "Februari", "Maret", "April", "Mei", "Juni"];
+
+    // Siapkan data untuk Excel
+    const excelData = filteredData.map((d) => {
+      const k = d.keuangan;
+      const row: any = {
+        "Nama Siswa": d.namaLengkap,
+        "No. WA Wali": formatWhatsAppNumber(d.whatsappOrtu),
+        "Kelas": d.kelas || "-",
+      };
+
+      // Tambahkan status bulanan
+      bulanVisible.forEach((bulan) => {
+        const tb = k.tagihanBulanan?.find((t) => t.bulan === bulan);
+        row[bulan] = tb?.status === "Lunas" ? "Lunas" : "Belum Lunas";
+      });
+
+      // Tambahkan status semester
+      const ts = k.tagihanSemesteran?.find((t) => t.semester === selectedSemester);
+      row[`Semester ${selectedSemester}`] = ts?.status === "Lunas" ? "Lunas" : "Belum Lunas";
+
+      return row;
+    });
+
+    // Buat worksheet
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Tagihan");
+
+    // Atur lebar kolom agar rapi
+    const maxWidths = [
+      { wch: 25 }, // Nama Siswa
+      { wch: 15 }, // WA
+      { wch: 10 }, // Kelas
+      ...bulanVisible.map(() => ({ wch: 12 })),
+      { wch: 15 }, // Semester
+    ];
+    worksheet["!cols"] = maxWidths;
+
+    // Generate nama file
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `Rekap_Tagihan_Kelas_${selectedKelas}_Sem_${selectedSemester}_${timestamp}.xlsx`;
+
+    // Download file
+    XLSX.writeFile(workbook, filename);
+  };
+
   return (
     <div className="flex-1 min-w-0 w-full max-w-full space-y-4 md:p-2 pt-6 overflow-x-hidden">
       <div className="flex items-center justify-between">
@@ -192,6 +244,16 @@ export default function RekapTagihanPage() {
             <CardDescription>Menampilkan {filteredData.length} siswa.</CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button
+              variant="default"
+              onClick={exportToExcel}
+              disabled={loading || filteredData.length === 0}
+              className="w-full sm:w-auto gap-2 bg-green-600 hover:bg-green-700 text-white border-none"
+            >
+              <FileDown className="h-4 w-4" />
+              Export Excel
+            </Button>
+            
             <Select value={selectedSemester} onValueChange={handleSemesterChange}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Pilih Semester" />
@@ -209,7 +271,7 @@ export default function RekapTagihanPage() {
               <SelectContent>
                 <SelectItem value="semua">Semua Kelas</SelectItem>
                 {uniqueClasses.map((kelas) => (
-                  <SelectItem key={kelas} value={kelas}>{kelas}</SelectItem>
+                  <SelectItem key={kelas} value={kelas}>Kelas {kelas}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

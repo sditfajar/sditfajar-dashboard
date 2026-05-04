@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, Fragment } from "react";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { Subject } from "@/lib/firebase/pembelajaran";
@@ -16,10 +16,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/fade-in";
 import { Loader2, BookOpen, Download } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function GuruMapelPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedKelas, setSelectedKelas] = useState("Semua");
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,7 +42,7 @@ export default function GuruMapelPage() {
           if (a.kategori_kelas === b.kategori_kelas) {
             return a.nama_mapel.localeCompare(b.nama_mapel);
           }
-          return a.kategori_kelas.localeCompare(b.kategori_kelas);
+          return a.kategori_kelas.localeCompare(b.kategori_kelas, undefined, { numeric: true });
         });
         setSubjects(data);
         setIsLoading(false);
@@ -53,17 +61,48 @@ export default function GuruMapelPage() {
     return `${prefix}-${kelas}`;
   };
 
+  const availableKelas = useMemo(() => {
+    const kelasSet = new Set(subjects.map((s) => s.kategori_kelas));
+    return Array.from(kelasSet).sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true })
+    );
+  }, [subjects]);
+
+  const filteredSubjects = useMemo(() => {
+    if (selectedKelas === "Semua") return subjects;
+    return subjects.filter((s) => s.kategori_kelas === selectedKelas);
+  }, [subjects, selectedKelas]);
+
+  const groupedSubjects = useMemo(() => {
+    const groups: Record<string, Subject[]> = {};
+    filteredSubjects.forEach((mapel) => {
+      const kelas = mapel.kategori_kelas;
+      if (!groups[kelas]) {
+        groups[kelas] = [];
+      }
+      groups[kelas].push(mapel);
+    });
+
+    Object.keys(groups).forEach((kelas) => {
+      groups[kelas].sort((a, b) => a.nama_mapel.localeCompare(b.nama_mapel));
+    });
+
+    return groups;
+  }, [filteredSubjects]);
+
   const handleDownload = () => {
     const printWindow = window.open("", "_blank", "width=800,height=600");
     if (!printWindow || !printRef.current) return;
 
     const tableHTML = printRef.current.innerHTML;
+    const titleKelas = selectedKelas === "Semua" ? "Semua Kelas" : `Kelas ${selectedKelas}`;
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8" />
-          <title>Daftar Mata Pelajaran - SDIT Fajar</title>
+          <title>Daftar Mapel (${titleKelas}) - SDIT Fajar</title>
           <style>
             body { font-family: sans-serif; padding: 24px; color: #111; }
             h2 { font-size: 18px; margin-bottom: 4px; }
@@ -71,11 +110,12 @@ export default function GuruMapelPage() {
             table { width: 100%; border-collapse: collapse; font-size: 13px; }
             th { background: #f3f4f6; text-align: left; padding: 8px 12px; font-weight: 600; border: 1px solid #e5e7eb; }
             td { padding: 7px 12px; border: 1px solid #e5e7eb; white-space: nowrap; }
+            .group-row td { background: #eff6ff; font-weight: 600; color: #2563eb; }
             @media print { body { padding: 0; } }
           </style>
         </head>
         <body>
-          <h2>Daftar Mata Pelajaran</h2>
+          <h2>Daftar Mata Pelajaran (${titleKelas})</h2>
           <p>SDIT Fajar &mdash; Dicetak pada ${new Date().toLocaleDateString("id-ID", {
             weekday: "long",
             year: "numeric",
@@ -104,14 +144,30 @@ export default function GuruMapelPage() {
           </p>
         </div>
 
-        <Button
-          onClick={handleDownload}
-          disabled={isLoading || subjects.length === 0}
-          className="shrink-0 bg-green-600 hover:bg-green-700 text-white gap-2 text-xs sm:text-sm self-start sm:self-auto"
-        >
-          <Download className="h-4 w-4" />
-          Download Mapel
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <Select value={selectedKelas} onValueChange={setSelectedKelas} disabled={isLoading}>
+            <SelectTrigger className="w-full sm:w-[150px] text-xs sm:text-sm">
+              <SelectValue placeholder="Filter Kelas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Semua">Semua Kelas</SelectItem>
+              {availableKelas.map((kelas) => (
+                <SelectItem key={kelas} value={kelas}>
+                  Kelas {kelas}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button
+            onClick={handleDownload}
+            disabled={isLoading || filteredSubjects.length === 0}
+            className="shrink-0 bg-green-600 hover:bg-green-700 text-white gap-2 text-xs sm:text-sm w-full sm:w-auto"
+          >
+            <Download className="h-4 w-4" />
+            Download Mapel
+          </Button>
+        </div>
       </FadeIn>
 
       <FadeIn className="w-full flex flex-col flex-1 rounded-lg border shadow-sm p-4 sm:p-6 bg-white dark:bg-zinc-950/50 backdrop-blur-sm overflow-hidden">
@@ -127,14 +183,25 @@ export default function GuruMapelPage() {
               </tr>
             </thead>
             <tbody>
-              {subjects.map((mapel, index) => (
-                <tr key={mapel.id}>
-                  <td>{index + 1}</td>
-                  <td>{getKodeMapel(mapel.nama_mapel, mapel.kategori_kelas)}</td>
-                  <td>{mapel.nama_mapel}</td>
-                  <td>Kelas {mapel.kategori_kelas} • {mapel.tipe}</td>
-                </tr>
-              ))}
+              {Object.entries(groupedSubjects)
+                .sort(([kelasA], [kelasB]) =>
+                  kelasA.localeCompare(kelasB, undefined, { numeric: true })
+                )
+                .map(([kelas, mapelList]) => (
+                  <Fragment key={kelas}>
+                    <tr className="group-row">
+                      <td colSpan={4}>📖 Daftar Mapel Kelas {kelas}</td>
+                    </tr>
+                    {mapelList.map((mapel, index) => (
+                      <tr key={mapel.id}>
+                        <td>{index + 1}</td>
+                        <td>{getKodeMapel(mapel.nama_mapel, mapel.kategori_kelas)}</td>
+                        <td>{mapel.nama_mapel}</td>
+                        <td>Kelas {mapel.kategori_kelas} • {mapel.tipe}</td>
+                      </tr>
+                    ))}
+                  </Fragment>
+                ))}
             </tbody>
           </table>
         </div>
@@ -145,7 +212,7 @@ export default function GuruMapelPage() {
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
                 <TableHead className="w-[50px] sm:w-[80px] text-center whitespace-nowrap">No</TableHead>
-                <TableHead className="whitespace-nowrap">Kode Mapel</TableHead>
+                <TableHead className="whitespace-nowrap pl-8">Kode Mapel</TableHead>
                 <TableHead className="whitespace-nowrap">Mapel</TableHead>
                 <TableHead className="whitespace-nowrap">Keterangan</TableHead>
               </TableRow>
@@ -160,7 +227,7 @@ export default function GuruMapelPage() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : subjects.length === 0 ? (
+              ) : filteredSubjects.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="h-40 text-center text-muted-foreground">
                     <div className="flex flex-col items-center justify-center gap-3">
@@ -170,36 +237,52 @@ export default function GuruMapelPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                subjects.map((mapel, index) => (
-                  <TableRow
-                    key={mapel.id}
-                    className="hover:bg-muted/50 transition-colors"
-                  >
-                    <TableCell className="text-center whitespace-nowrap font-medium text-muted-foreground">
-                      {index + 1}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <Badge variant="outline" className="font-mono text-xs bg-muted/30">
-                        {getKodeMapel(mapel.nama_mapel, mapel.kategori_kelas)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap font-semibold">
-                      {mapel.nama_mapel}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span>Kelas {mapel.kategori_kelas}</span>
-                        <span className="text-muted-foreground">•</span>
-                        <Badge
-                          variant={mapel.tipe === "Umum" ? "default" : "secondary"}
-                          className="text-xs font-medium"
+                Object.entries(groupedSubjects)
+                  .sort(([kelasA], [kelasB]) =>
+                    kelasA.localeCompare(kelasB, undefined, { numeric: true })
+                  )
+                  .map(([kelas, mapelList]) => (
+                    <Fragment key={kelas}>
+                      <TableRow className="bg-primary/5 hover:bg-primary/5">
+                        <TableCell colSpan={4} className="font-semibold text-xs sm:text-sm py-3 text-primary">
+                          <span className="flex items-center gap-2">
+                            <BookOpen className="h-4 w-4 shrink-0" />
+                            <span className="whitespace-nowrap">Daftar Mapel Kelas {kelas}</span>
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                      {mapelList.map((mapel, index) => (
+                        <TableRow
+                          key={mapel.id}
+                          className="hover:bg-muted/50 transition-colors"
                         >
-                          {mapel.tipe}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                          <TableCell className="text-center whitespace-nowrap font-medium text-muted-foreground">
+                            {index + 1}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap pl-8">
+                            <Badge variant="outline" className="font-mono text-xs bg-muted/30">
+                              {getKodeMapel(mapel.nama_mapel, mapel.kategori_kelas)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap font-semibold">
+                            {mapel.nama_mapel}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <span>Kelas {mapel.kategori_kelas}</span>
+                              <span className="text-muted-foreground">•</span>
+                              <Badge
+                                variant={mapel.tipe === "Umum" ? "default" : mapel.tipe === "Agama" ? "outline" : "secondary"}
+                                className={`text-xs font-medium ${mapel.tipe === "Agama" ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800" : ""}`}
+                              >
+                                {mapel.tipe}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </Fragment>
+                  ))
               )}
             </TableBody>
           </Table>

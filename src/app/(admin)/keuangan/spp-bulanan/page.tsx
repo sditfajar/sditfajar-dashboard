@@ -14,7 +14,19 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { CreditCard, Loader2 } from "lucide-react";
@@ -57,6 +69,11 @@ export default function SPPBulananPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tempTagihan, setTempTagihan] = useState<TagihanBulanan[]>([]);
   const [selectedKelas, setSelectedKelas] = useState<string>("semua");
+
+  // Reset states
+  const [isResetOpen, setIsResetOpen] = useState(false);
+  const [resetInput, setResetInput] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
 
   const uniqueClasses = useMemo(() => {
     const classes = new Set(siswa.map(s => s.kelas).filter(Boolean));
@@ -180,6 +197,39 @@ export default function SPPBulananPage() {
     }
   };
 
+  const handleResetData = async () => {
+    if (resetInput !== "RESET") return;
+    setIsResetting(true);
+    try {
+      // Loop over all keuangan documents and reset tagihanBulanan
+      const promises = Object.values(keuangan).map(async (k) => {
+        const defaultTagihanBulanan = BULAN_AKADEMIK.map((bulan) => ({
+          bulan,
+          nominal: 350000,
+          status: "Belum Lunas" as const,
+          tanggalBayar: null,
+        }));
+        
+        const docRef = doc(db, "keuangan", k.id);
+        await updateDoc(docRef, {
+          tagihanBulanan: defaultTagihanBulanan
+        });
+      });
+      
+      await Promise.all(promises);
+      
+      toast.success("Semua data SPP Bulanan berhasil direset.");
+      setIsResetOpen(false);
+      setResetInput("");
+      fetchData(); // Reload data
+    } catch (error) {
+      console.error("Error resetting data:", error);
+      toast.error("Gagal mereset data.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const chartData = useMemo(() => {
     const counts = BULAN_AKADEMIK.map((bulan) => ({
       name: bulan.substring(0, 3),
@@ -284,18 +334,23 @@ export default function SPPBulananPage() {
             <CardTitle>Data Pembayaran Siswa</CardTitle>
             <CardDescription>Daftar siswa dan status tagihan SPP bulanan.</CardDescription>
           </div>
-          <div className="w-full sm:w-[200px]">
-            <Select value={selectedKelas} onValueChange={setSelectedKelas}>
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih Kelas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="semua">Semua Kelas</SelectItem>
-                {uniqueClasses.map((kelas) => (
-                  <SelectItem key={kelas} value={kelas}>{kelas}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <div className="w-full sm:w-[200px]">
+              <Select value={selectedKelas} onValueChange={setSelectedKelas}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih Kelas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semua">Semua Kelas</SelectItem>
+                  {uniqueClasses.map((kelas) => (
+                    <SelectItem key={kelas} value={kelas}>{kelas}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button variant="destructive" onClick={() => setIsResetOpen(true)}>
+              Reset Data
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -366,43 +421,94 @@ export default function SPPBulananPage() {
 
       {/* Modal Kelola SPP */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Kelola SPP - {selectedStudent?.namaLengkap}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
-            {tempTagihan.map((tb, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                <div className="flex flex-col">
-                  <span className="font-medium">{tb.bulan}</span>
-                  <span className="text-xs text-muted-foreground">
-                    Rp350.000
-                    {tb.tanggalBayar && tb.status === "Lunas" && (
-                      <span className="ml-2 block sm:inline">
-                        (Dibayar: {tb.tanggalBayar?.toDate ? tb.tanggalBayar.toDate().toLocaleDateString('id-ID') : new Date(tb.tanggalBayar).toLocaleDateString('id-ID')})
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${tb.status === "Lunas" ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
-                    {tb.status}
-                  </span>
-                  <button
-                    onClick={() => handleToggleLunas(idx)}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${tb.status === "Lunas" ? "bg-green-500" : "bg-gray-200 dark:bg-slate-700"
-                      }`}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${tb.status === "Lunas" ? "translate-x-5" : "translate-x-0"
-                        }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+
+          <Tabs defaultValue="ganjil" className="w-full flex-1 flex flex-col overflow-hidden">
+            <TabsList className="grid w-full grid-cols-2 mb-2 shrink-0">
+              <TabsTrigger value="ganjil">Semester Ganjil</TabsTrigger>
+              <TabsTrigger value="genap">Semester Genap</TabsTrigger>
+            </TabsList>
+
+            <div className="flex-1 overflow-y-auto pr-2 py-2">
+              <TabsContent value="ganjil" className="space-y-4 mt-0">
+                {tempTagihan.map((tb, idx) => {
+                  if (idx >= 6) return null; // Hanya 6 bulan pertama (Juli-Desember)
+                  return (
+                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{tb.bulan}</span>
+                        <span className="text-xs text-muted-foreground">
+                          Rp350.000
+                          {tb.tanggalBayar && tb.status === "Lunas" && (
+                            <span className="ml-2 block sm:inline">
+                              (Dibayar: {tb.tanggalBayar?.toDate ? tb.tanggalBayar.toDate().toLocaleDateString('id-ID') : new Date(tb.tanggalBayar).toLocaleDateString('id-ID')})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-medium ${tb.status === "Lunas" ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
+                          {tb.status}
+                        </span>
+                        <button
+                          onClick={() => handleToggleLunas(idx)}
+                          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${tb.status === "Lunas" ? "bg-green-500" : "bg-gray-200 dark:bg-slate-700"
+                            }`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${tb.status === "Lunas" ? "translate-x-5" : "translate-x-0"
+                              }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </TabsContent>
+
+              <TabsContent value="genap" className="space-y-4 mt-0">
+                {tempTagihan.map((tb, idx) => {
+                  if (idx < 6) return null; // Hanya 6 bulan terakhir (Januari-Juni)
+                  return (
+                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{tb.bulan}</span>
+                        <span className="text-xs text-muted-foreground">
+                          Rp350.000
+                          {tb.tanggalBayar && tb.status === "Lunas" && (
+                            <span className="ml-2 block sm:inline">
+                              (Dibayar: {tb.tanggalBayar?.toDate ? tb.tanggalBayar.toDate().toLocaleDateString('id-ID') : new Date(tb.tanggalBayar).toLocaleDateString('id-ID')})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-medium ${tb.status === "Lunas" ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
+                          {tb.status}
+                        </span>
+                        <button
+                          onClick={() => handleToggleLunas(idx)}
+                          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${tb.status === "Lunas" ? "bg-green-500" : "bg-gray-200 dark:bg-slate-700"
+                            }`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${tb.status === "Lunas" ? "translate-x-5" : "translate-x-0"
+                              }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </TabsContent>
+            </div>
+          </Tabs>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>
               Batal
@@ -413,6 +519,40 @@ export default function SPPBulananPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Alert Dialog Reset */}
+      <AlertDialog open={isResetOpen} onOpenChange={(open) => {
+        setIsResetOpen(open);
+        if (!open) setResetInput("");
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Semua Data SPP Bulanan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini akan mengembalikan semua status SPP Bulanan siswa menjadi "Belum Lunas". Data pembayaran (tanggal bayar) juga akan dihapus.
+              <br /><br />
+              Ketik <strong>RESET</strong> untuk mengkonfirmasi.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Input 
+              value={resetInput} 
+              onChange={(e) => setResetInput(e.target.value)} 
+              placeholder="Ketik RESET" 
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isResetting}>Batal</AlertDialogCancel>
+            <Button 
+              variant="destructive" 
+              onClick={handleResetData} 
+              disabled={resetInput !== "RESET" || isResetting}
+            >
+              {isResetting ? "Mereset..." : "Reset Data"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

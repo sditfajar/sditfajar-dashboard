@@ -14,6 +14,17 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
@@ -57,6 +68,11 @@ export default function TagihanSemesterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tempTagihan, setTempTagihan] = useState<TagihanSemesteran[]>([]);
   const [selectedKelas, setSelectedKelas] = useState<string>("semua");
+
+  // Reset states
+  const [isResetOpen, setIsResetOpen] = useState(false);
+  const [resetInput, setResetInput] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
 
   const uniqueClasses = useMemo(() => {
     const classes = new Set(siswa.map(s => s.kelas).filter(Boolean));
@@ -188,6 +204,38 @@ export default function TagihanSemesterPage() {
     }
   };
 
+  const handleResetData = async () => {
+    if (resetInput !== "RESET") return;
+    setIsResetting(true);
+    try {
+      const promises = Object.values(keuangan).map(async (k) => {
+        const defaultTagihanSemesteran = ["Ganjil", "Genap"].map((semester) => ({
+          semester: semester as "Ganjil" | "Genap",
+          nominal: 1200000,
+          status: "Belum Lunas" as "Belum Lunas",
+          tanggalBayar: null,
+        }));
+        
+        const docRef = doc(db, "keuangan", k.id);
+        await updateDoc(docRef, {
+          tagihanSemesteran: defaultTagihanSemesteran
+        });
+      });
+      
+      await Promise.all(promises);
+      
+      toast.success("Semua data Tagihan Semester berhasil direset.");
+      setIsResetOpen(false);
+      setResetInput("");
+      fetchData(); // Reload data
+    } catch (error) {
+      console.error("Error resetting data:", error);
+      toast.error("Gagal mereset data.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   // Chart data preparation
   const chartData = useMemo(() => {
     let lunas = 0;
@@ -288,18 +336,23 @@ export default function TagihanSemesterPage() {
             <CardTitle>Data Pembayaran Siswa</CardTitle>
             <CardDescription>Status tagihan semesteran Ganjil & Genap per siswa.</CardDescription>
           </div>
-          <div className="w-full sm:w-[200px]">
-            <Select value={selectedKelas} onValueChange={setSelectedKelas}>
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih Kelas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="semua">Semua Kelas</SelectItem>
-                {uniqueClasses.map((kelas) => (
-                  <SelectItem key={kelas} value={kelas}>{kelas}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <div className="w-full sm:w-[200px]">
+              <Select value={selectedKelas} onValueChange={setSelectedKelas}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih Kelas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semua">Semua Kelas</SelectItem>
+                  {uniqueClasses.map((kelas) => (
+                    <SelectItem key={kelas} value={kelas}>{kelas}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button variant="destructive" onClick={() => setIsResetOpen(true)}>
+              Reset Data
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -433,6 +486,40 @@ export default function TagihanSemesterPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Alert Dialog Reset */}
+      <AlertDialog open={isResetOpen} onOpenChange={(open) => {
+        setIsResetOpen(open);
+        if (!open) setResetInput("");
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Semua Data Tagihan Semester?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini akan mengembalikan semua status Tagihan Semester siswa menjadi "Belum Lunas". Data pembayaran (tanggal bayar) juga akan dihapus.
+              <br /><br />
+              Ketik <strong>RESET</strong> untuk mengkonfirmasi.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Input 
+              value={resetInput} 
+              onChange={(e) => setResetInput(e.target.value)} 
+              placeholder="Ketik RESET" 
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isResetting}>Batal</AlertDialogCancel>
+            <Button 
+              variant="destructive" 
+              onClick={handleResetData} 
+              disabled={resetInput !== "RESET" || isResetting}
+            >
+              {isResetting ? "Mereset..." : "Reset Data"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
