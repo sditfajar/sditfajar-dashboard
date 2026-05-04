@@ -43,7 +43,7 @@ export function Navbar({ isGuruMode = false }: NavbarProps) {
     <header className="sticky top-0 z-30 flex h-14 w-full items-center gap-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:h-[60px] lg:px-6">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+          <Button variant="outline" size="icon" className="shrink-0 lg:hidden">
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
@@ -78,7 +78,7 @@ export function Navbar({ isGuruMode = false }: NavbarProps) {
       </Sheet>
 
       {/* Mobile Title (Hidden on md and up) */}
-      <div className="flex items-center gap-2 md:hidden">
+      <div className="flex items-center gap-2 lg:hidden">
         <Image
           src="/favicon.png"
           alt="Logo SDIT Fajar"

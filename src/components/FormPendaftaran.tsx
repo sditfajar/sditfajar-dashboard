@@ -27,12 +27,18 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { submitPendaftaran } from "@/lib/firebase/ppdb";
-
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
 
 const formSchema = z.object({
   namaLengkap: z.string().min(2, { message: "Nama lengkap harus diisi." }),
@@ -43,20 +49,11 @@ const formSchema = z.object({
   namaAyah: z.string().min(2, { message: "Nama Ayah Kandung harus diisi." }),
   namaIbu: z.string().min(2, { message: "Nama Ibu Kandung harus diisi." }),
   waOrtu: z.string().min(10, { message: "Nomor WA harus valid (min 10 angka)." }),
-  fileKK: z
-    .any()
-    .optional()
-    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, "Maksimal ukuran file 2MB.")
-    .refine((files) => !files || files.length === 0 || ACCEPTED_FILE_TYPES.includes(files?.[0]?.type), "Format harus .jpg, .png, atau .pdf."),
-  fileAkta: z
-    .any()
-    .optional()
-    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, "Maksimal ukuran file 2MB.")
-    .refine((files) => !files || files.length === 0 || ACCEPTED_FILE_TYPES.includes(files?.[0]?.type), "Format harus .jpg, .png, atau .pdf."),
 });
 
 export function FormPendaftaran() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccessPopupOpen, setIsSuccessPopupOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -74,9 +71,6 @@ export function FormPendaftaran() {
     try {
       setIsSubmitting(true);
       
-      const fileKK = values.fileKK?.[0] || null;
-      const fileAkta = values.fileAkta?.[0] || null;
-      
       const dataToSave = {
         namaLengkap: values.namaLengkap,
         tempatLahir: values.tempatLahir,
@@ -88,11 +82,10 @@ export function FormPendaftaran() {
         waOrtu: values.waOrtu,
       };
 
-      await submitPendaftaran(dataToSave, fileKK, fileAkta);
+      // fileKK dan fileAkta di-set null karena unggah dokumen dihilangkan
+      await submitPendaftaran(dataToSave, null, null);
       
-      toast.success("Pendaftaran Berhasil!", {
-        description: "Data Anda telah masuk ke sistem kami. Tim kami akan segera menghubungi nomor WA yang terdaftar.",
-      });
+      setIsSuccessPopupOpen(true);
       
       form.reset();
     } catch (error) {
@@ -290,59 +283,6 @@ export function FormPendaftaran() {
               )}
             />
 
-            {/* Upload Dokumen */}
-            <div className="space-y-6 md:col-span-2 mt-4">
-              <h3 className="text-lg font-semibold border-b pb-2">C. Unggah Dokumen</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Maksimal ukuran file adalah 2MB per dokumen. Format yang didukung: .jpg, .jpeg, .png, .pdf
-              </p>
-            </div>
-
-            <FormField
-              control={form.control}
-              name="fileKK"
-              render={({ field: { value, onChange, ...fieldProps } }) => (
-                <FormItem>
-                  <FormLabel>Kartu Keluarga (KK)</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        onChange={(event) =>
-                          onChange(event.target.files && event.target.files)
-                        }
-                        {...fieldProps}
-                        className="file:bg-primary file:text-primary-foreground file:border-0 file:rounded-md file:px-4 file:py-1 file:mr-4 cursor-pointer"
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="fileAkta"
-              render={({ field: { value, onChange, ...fieldProps } }) => (
-                <FormItem>
-                  <FormLabel>Akta Kelahiran</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="file"
-                      accept="image/*,application/pdf"
-                      onChange={(event) =>
-                        onChange(event.target.files && event.target.files)
-                      }
-                      {...fieldProps}
-                      className="file:bg-primary file:text-primary-foreground file:border-0 file:rounded-md file:px-4 file:py-1 file:mr-4 cursor-pointer"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
 
           <div className="pt-6">
@@ -362,6 +302,36 @@ export function FormPendaftaran() {
           </div>
         </form>
       </Form>
+
+      <AlertDialog open={isSuccessPopupOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl">Pendaftaran Berhasil!</AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-foreground mt-2">
+              Data pendaftaran Anda telah masuk ke sistem kami. 
+              <br/><br/>
+              Langkah selanjutnya, <b>Wajib melampirkan dokumen</b> berikut:
+              <ul className="list-disc ml-5 mt-2 mb-2 font-medium">
+                <li>Kartu Keluarga (KK)</li>
+                <li>Akta Kelahiran</li>
+                <li>Ijazah SD</li>
+              </ul>
+              Silakan kirim dokumen tersebut melalui WhatsApp ke Admin Pendaftaran SDIT Fajar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogAction asChild className="w-full h-12 bg-green-600 hover:bg-green-700 text-white text-base font-semibold">
+              <a 
+                href="https://wa.me/6289517795206?text=Assalamu%27alaikum%20Admin%2C%20saya%20sudah%20mengisi%20formulir%20pendaftaran%20Siswa%20Baru.%20Berikut%20saya%20lampirkan%20dokumen%20pendukung%20(KK%2C%20Akta%2C%20dan%20Ijazah%20SD)."
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Kirim Dokumen via WhatsApp
+              </a>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

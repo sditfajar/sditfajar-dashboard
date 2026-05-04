@@ -70,7 +70,7 @@ export const adminLinks: NavItem[] = [
 
 export function Sidebar() {
   return (
-    <aside className="hidden md:flex w-64 flex-col border-r bg-background h-screen sticky top-0">
+    <aside className="hidden lg:flex w-64 flex-col border-r bg-background h-screen sticky top-0">
       <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
         <Link href="/admin" className="flex items-center gap-2 font-semibold">
           <span className="text-lg flex items-center">
