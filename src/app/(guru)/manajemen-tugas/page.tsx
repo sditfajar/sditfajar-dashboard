@@ -26,10 +26,8 @@ export default function ManajemenTugasPage() {
       setTugasList(data);
     } catch (error) {
       console.error("Error fetching tugas:", error);
-      toast({
-        title: "Gagal memuat tugas",
+      toast.error("Gagal memuat tugas", {
         description: "Terjadi kesalahan saat mengambil data tugas.",
-        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -60,34 +58,30 @@ export default function ManajemenTugasPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Apakah Anda yakin ingin menghapus tugas ini?")) return;
-    
+
     try {
       await deleteTugas(id);
       setTugasList(tugasList.filter(t => t.id !== id));
-      toast({
-        title: "Berhasil dihapus",
+      toast.success("Berhasil dihapus", {
         description: "Tugas telah dihapus dari sistem.",
       });
     } catch (error) {
       console.error("Error deleting tugas:", error);
-      toast({
-        title: "Gagal menghapus",
+      toast.error("Gagal menghapus", {
         description: "Terjadi kesalahan saat menghapus tugas.",
-        variant: "destructive",
       });
     }
   };
 
   const handleFormSubmit = async (values: Omit<Tugas, "id" | "createdAt" | "updatedAt" | "guruId">) => {
     if (!currentGuruId) return;
-    
+
     setIsSubmitting(true);
     try {
       if (editingTugas && editingTugas.id) {
         // Implementasi updateTugas jika diperlukan, saat ini hanya tambah/hapus di lib
         // Jika ada fungsi update, panggil di sini
-        toast({
-          title: "Belum Diimplementasikan",
+        toast.info("Belum Diimplementasikan", {
           description: "Fungsi update tugas belum didukung sepenuhnya di demo ini.",
         });
       } else {
@@ -95,8 +89,7 @@ export default function ManajemenTugasPage() {
           ...values,
           guruId: currentGuruId,
         });
-        toast({
-          title: "Tugas ditambahkan",
+        toast.success("Tugas ditambahkan", {
           description: "Tugas baru berhasil disimpan ke sistem.",
         });
         fetchTugas(currentGuruId);
@@ -104,10 +97,8 @@ export default function ManajemenTugasPage() {
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error submitting tugas:", error);
-      toast({
-        title: "Gagal menyimpan",
+      toast.error("Gagal menyimpan", {
         description: "Terjadi kesalahan saat menyimpan tugas.",
-        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -165,7 +156,7 @@ export default function ManajemenTugasPage() {
                   <p className="text-muted-foreground line-clamp-3">
                     {tugas.deskripsi}
                   </p>
-                  
+
                   <div className="space-y-2 pt-2 border-t text-sm">
                     <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                       <MapPin className="w-4 h-4 text-emerald-500" />
