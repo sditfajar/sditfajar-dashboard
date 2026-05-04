@@ -7,6 +7,8 @@ import {
   onSnapshot,
   query,
   orderBy,
+  where,
+  getDocs,
   Timestamp,
   serverTimestamp
 } from "firebase/firestore";
@@ -47,6 +49,21 @@ export const addSiswa = async (data: Omit<Siswa, "createdAt">) => {
 export const updateSiswa = async (nisn: string, data: Partial<Siswa>) => {
   const docRef = doc(collection(db, COLLECTION_NAME), nisn);
   await updateDoc(docRef, data);
+
+  if (data.namaLengkap) {
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("nisn", "==", nisn));
+      const snapshot = await getDocs(q);
+      
+      const updatePromises = snapshot.docs.map((userDoc) => 
+        updateDoc(doc(db, "users", userDoc.id), { name: data.namaLengkap })
+      );
+      await Promise.all(updatePromises);
+    } catch (error) {
+      console.error("Error syncing name to users collection:", error);
+    }
+  }
 };
 
 // Delete siswa

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User } from "lucide-react";
@@ -14,6 +14,7 @@ interface UserProfile {
   role: string;
   email: string | null;
   photoURL: string | null;
+  subtitle?: string;
 }
 
 export function SidebarProfile() {
@@ -21,27 +22,31 @@ export function SidebarProfile() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let unsubscribeDoc: () => void;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (!user) {
         setProfile(null);
         setIsLoading(false);
+        if (unsubscribeDoc) unsubscribeDoc();
         return;
       }
 
-      // Check session storage first
       const cachedProfile = sessionStorage.getItem(`profile_${user.uid}`);
       if (cachedProfile) {
         const parsed = JSON.parse(cachedProfile);
-        setProfile({ ...parsed, email: user.email });
+        let cachedSubtitle = parsed.subtitle || user.email || parsed.role;
+        if (parsed.role === "Siswa" && user.email) {
+          cachedSubtitle = `NISN: ${user.email.split("@")[0]}`;
+        }
+        setProfile({ ...parsed, email: user.email, subtitle: cachedSubtitle });
         setIsLoading(false);
-        return;
+        // Continue to setup onSnapshot to listen for changes
       }
 
-      // Fetch from Firestore
-      try {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
+      // Fetch from Firestore real-time
+      const userDocRef = doc(db, "users", user.uid);
+      unsubscribeDoc = onSnapshot(userDocRef, (userDocSnap) => {
         let role = "Admin";
         let photoURL = user.photoURL;
         let displayName = user.displayName || "User";
@@ -49,29 +54,41 @@ export function SidebarProfile() {
 
         if (userDocSnap.exists()) {
           const data = userDocSnap.data();
-          role = data.role === "teacher" ? "Guru" : "Admin";
+          if (data.role === "teacher") role = "Guru";
+          else if (data.role === "student" || data.role === "murid") role = "Siswa";
+          else role = "Admin";
+
           if (data.photoURL) photoURL = data.photoURL;
           if (data.name) displayName = data.name;
         }
 
-        const newProfile = { displayName, role, email, photoURL };
+        let subtitle = email || role;
+        if (role === "Siswa" && email) {
+          subtitle = `NISN: ${email.split("@")[0]}`;
+        }
+
+        const newProfile = { displayName, role, email, photoURL, subtitle };
         setProfile(newProfile);
         sessionStorage.setItem(`profile_${user.uid}`, JSON.stringify(newProfile));
-      } catch (error) {
+        setIsLoading(false);
+      }, (error) => {
         console.error("Error fetching user profile:", error);
         // Fallback
-        setProfile({
+        setProfile((prev) => prev || {
           displayName: user.displayName || "Admin",
           role: "Admin",
           email: user.email,
           photoURL: user.photoURL,
+          subtitle: user.email || "Admin",
         });
-      } finally {
         setIsLoading(false);
-      }
+      });
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeDoc) unsubscribeDoc();
+    };
   }, []);
 
   if (isLoading) {
@@ -101,7 +118,7 @@ export function SidebarProfile() {
           {profile.displayName}
         </span>
         <span className="text-[11px] font-medium text-muted-foreground truncate">
-          {profile.email || profile.role}
+          {profile.subtitle || profile.email || profile.role}
         </span>
       </div>
     </div>

@@ -250,7 +250,7 @@ export function SiswaFormDialog({
                     <div className="space-y-0.5">
                       <FormLabel className="text-base font-semibold">Buat Akun LMS Siswa</FormLabel>
                       <p className="text-sm text-muted-foreground">
-                        Siswa akan bisa login menggunakan email NISN. (Membutuhkan Tempat & Tanggal Lahir)
+                        Siswa akan bisa login menggunakan NISN & TTL (depok30122015) sebagai password default
                       </p>
                     </div>
                     <FormControl>

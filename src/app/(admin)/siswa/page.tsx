@@ -90,7 +90,7 @@ export default function SiswaPage() {
           const formattedDate = `${dateParts[2]}${dateParts[1]}${dateParts[0]}`;
           const cleanTempatLahir = formData.tempatLahir.toLowerCase().replace(/\s/g, "");
           const password = `${cleanTempatLahir}${formattedDate}`;
-          const email = `${formData.nisn}@siswa.sditfajar.com`;
+          const email = `${formData.nisn}@sditfajar.com`;
 
           toast.loading("Membuat akun LMS...", { id: `create-lms-${formData.nisn}` });
           const authRes = await createStudentUser({

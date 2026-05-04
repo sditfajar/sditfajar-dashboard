@@ -44,7 +44,10 @@ export function SidebarNav({ items, onNavigate }: SidebarNavProps) {
     >
       {items.map((item, index) => {
         const Icon = item.icon;
-        const isActive = item.href ? pathname.startsWith(item.href) : false;
+        const isRootDashboard = item.href === "/admin" || item.href === "/dashboard-guru" || item.href === "/dashboard-siswa";
+        const isActive = item.href 
+          ? (isRootDashboard ? pathname === item.href : pathname.startsWith(item.href))
+          : false;
 
         if (item.children && item.children.length > 0) {
           return (

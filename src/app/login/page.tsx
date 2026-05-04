@@ -8,14 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
+  const [nisn, setNisn] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("admin");
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -24,7 +27,12 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      let loginEmail = email;
+      if (activeTab === "siswa") {
+        loginEmail = `${nisn}@sditfajar.com`; 
+      }
+
+      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, password);
       const idToken = await userCredential.user.getIdToken();
 
       // Fetch user role from Firestore FIRST
@@ -65,7 +73,7 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error(err);
-      setError("Email atau password salah.");
+      setError("Kredensial tidak valid. Silakan periksa kembali.");
     } finally {
       setIsLoading(false);
     }
@@ -81,30 +89,58 @@ export default function LoginPage() {
       </Link>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Admin Login</CardTitle>
+          <CardTitle className="text-2xl">
+            {activeTab === "siswa" ? "Login Siswa" : activeTab === "guru" ? "Portal Guru" : "Admin Login"}
+          </CardTitle>
           <CardDescription>
-            Silahkan masuk menggunakan akun admin SDIT Fajar
+            Silahkan masuk ke sistem SDIT Fajar
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="grid gap-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-2">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="admin">Admin</TabsTrigger>
+                <TabsTrigger value="guru">Guru</TabsTrigger>
+                <TabsTrigger value="siswa">Siswa</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
             {error && (
               <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
                 {error}
               </div>
             )}
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@sditfajar.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="focus-visible:ring-green-500"
-              />
-            </div>
+            
+            {activeTab === "siswa" ? (
+              <div className="grid gap-2">
+                <Label htmlFor="nisn">NISN</Label>
+                <Input
+                  id="nisn"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="Masukkan 10 digit NISN"
+                  required
+                  value={nisn}
+                  onChange={(e) => setNisn(e.target.value.replace(/\D/g, ""))}
+                  className="focus-visible:ring-green-500"
+                />
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder={activeTab === "guru" ? "guru@sditfajar.com" : "admin@sditfajar.com"}
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="focus-visible:ring-green-500"
+                />
+              </div>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
               <Input
