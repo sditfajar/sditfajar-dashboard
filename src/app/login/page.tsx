@@ -8,9 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
+
+const tabs = [
+  { id: "admin", label: "Admin" },
+  { id: "guru", label: "Guru" },
+  { id: "siswa", label: "Siswa" },
+];
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -29,7 +35,7 @@ export default function LoginPage() {
     try {
       let loginEmail = email;
       if (activeTab === "siswa") {
-        loginEmail = `${nisn}@sditfajar.com`; 
+        loginEmail = `${nisn}@sditfajar.com`;
       }
 
       const userCredential = await signInWithEmailAndPassword(auth, loginEmail, password);
@@ -38,7 +44,7 @@ export default function LoginPage() {
       // Fetch user role from Firestore FIRST
       const { getDoc, doc } = await import("firebase/firestore");
       const { db } = await import("@/lib/firebase/config");
-      
+
       let userRole = "admin"; // Default
       try {
         const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
@@ -98,20 +104,38 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="grid gap-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-2">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="admin">Admin</TabsTrigger>
-                <TabsTrigger value="guru">Guru</TabsTrigger>
-                <TabsTrigger value="siswa">Siswa</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex space-x-1 rounded-xl bg-muted/50 p-1 mb-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveTab(tab.id);
+                  }}
+                  className={`${activeTab === tab.id
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                    } relative flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors outline-none`}
+                >
+                  {activeTab === tab.id && (
+                    <motion.div
+                      layoutId="active-tab-indicator"
+                      className="absolute inset-0 rounded-sm bg-background shadow-sm border border-border/50"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              ))}
+            </div>
 
             {error && (
               <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
                 {error}
               </div>
             )}
-            
+
             {activeTab === "siswa" ? (
               <div className="grid gap-2">
                 <Label htmlFor="nisn">NISN</Label>
@@ -133,7 +157,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder={activeTab === "guru" ? "guru@sditfajar.com" : "admin@sditfajar.com"}
+                  placeholder={activeTab === "guru" ? "guru@sditfajar.sch.id" : "admin@sditfajar.sch.id"}
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
