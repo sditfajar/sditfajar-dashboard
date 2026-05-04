@@ -48,8 +48,9 @@ export default function LoginPage() {
       let userRole = "admin"; // Default
       try {
         const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-        if (userDoc.exists() && userDoc.data().role) {
-          userRole = userDoc.data().role;
+        if (userDoc.exists()) {
+          const userData = userDoc.data() || {};
+          userRole = userData?.role ?? "admin";
         }
       } catch (dbError) {
         console.error("Error fetching user role:", dbError);

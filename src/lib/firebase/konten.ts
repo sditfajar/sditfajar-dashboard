@@ -54,10 +54,16 @@ export const getKontenBerita = async (): Promise<KontenBerita[]> => {
     orderBy("createdAt", "desc")
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    ...(doc.data() as Omit<KontenBerita, "id">),
-    id: doc.id,
-  }));
+  return snapshot.docs.map((doc) => {
+    const data = doc.data() || {};
+    return {
+      ...(data as Omit<KontenBerita, "id">),
+      judul: data?.judul ?? "Tanpa Judul",
+      deskripsiSingkat: data?.deskripsiSingkat ?? "-",
+      kontenLengkap: data?.kontenLengkap ?? "-",
+      id: doc.id,
+    };
+  });
 };
 
 export const getKontenBeritaPublic = async (
@@ -69,10 +75,16 @@ export const getKontenBeritaPublic = async (
     limit(maxItems)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    ...(doc.data() as Omit<KontenBerita, "id">),
-    id: doc.id,
-  }));
+  return snapshot.docs.map((doc) => {
+    const data = doc.data() || {};
+    return {
+      ...(data as Omit<KontenBerita, "id">),
+      judul: data?.judul ?? "Tanpa Judul",
+      deskripsiSingkat: data?.deskripsiSingkat ?? "-",
+      kontenLengkap: data?.kontenLengkap ?? "-",
+      id: doc.id,
+    };
+  });
 };
 
 export const deleteKontenBerita = async (id: string) => {

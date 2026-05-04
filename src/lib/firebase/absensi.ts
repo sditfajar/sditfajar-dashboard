@@ -39,11 +39,18 @@ export const getActiveSiswa = async (): Promise<Siswa[]> => {
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(
-    (doc) =>
-      ({
-        ...doc.data(),
+    (doc) => {
+      const docData = doc.data() || {};
+      return {
+        ...docData,
+        namaLengkap: docData?.namaLengkap ?? "-",
+        kelas: docData?.kelas ?? "-",
+        jenisKelamin: docData?.jenisKelamin ?? "-",
+        status: docData?.status ?? "Aktif",
+        penerimaBansos: docData?.penerimaBansos ?? false,
         nisn: doc.id,
-      } as Siswa)
+      } as Siswa;
+    }
   );
 };
 
@@ -59,11 +66,16 @@ export const getAbsensiByDate = async (dateStr: string): Promise<Absensi[]> => {
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(
-    (doc) =>
-      ({
-        ...doc.data(),
+    (doc) => {
+      const docData = doc.data() || {};
+      return {
+        ...docData,
+        status: docData?.status ?? "Hadir",
+        keterangan: docData?.keterangan ?? "-",
+        studentName: docData?.studentName ?? "-",
         attendanceId: doc.id,
-      } as Absensi)
+      } as Absensi;
+    }
   );
 };
 
@@ -105,10 +117,15 @@ export const getRekapAbsensiBulanan = async (
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(
-    (doc) =>
-      ({
-        ...doc.data(),
+    (doc) => {
+      const docData = doc.data() || {};
+      return {
+        ...docData,
+        status: docData?.status ?? "Hadir",
+        keterangan: docData?.keterangan ?? "-",
+        studentName: docData?.studentName ?? "-",
         attendanceId: doc.id,
-      } as Absensi)
+      } as Absensi;
+    }
   );
 };

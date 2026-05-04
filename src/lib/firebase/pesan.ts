@@ -31,10 +31,18 @@ export const getPesanKontak = async (): Promise<PesanKontak[]> => {
     orderBy("createdAt", "desc")
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    ...(doc.data() as Omit<PesanKontak, "id">),
-    id: doc.id,
-  }));
+  return snapshot.docs.map((doc) => {
+    const data = doc.data() || {};
+    return {
+      ...(data as Omit<PesanKontak, "id">),
+      nama: data?.nama ?? "-",
+      email: data?.email ?? "-",
+      subjek: data?.subjek ?? "-",
+      pesan: data?.pesan ?? "-",
+      status: data?.status ?? "belum_dibaca",
+      id: doc.id,
+    };
+  });
 };
 
 export const updateStatusPesan = async (

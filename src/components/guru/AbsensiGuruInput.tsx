@@ -124,8 +124,8 @@ export function AbsensiGuruInput() {
             const userDocRef = doc(db, "users", user.uid);
             const userDocSnap = await getDoc(userDocRef);
             if (userDocSnap.exists()) {
-              const data = userDocSnap.data();
-              setTeacherName(data.name || user.displayName || "Guru");
+              const data = userDocSnap.data() || {};
+              setTeacherName(data?.name ?? user.displayName ?? "Guru");
             } else {
               setTeacherName(user.displayName || "Guru");
             }
@@ -156,7 +156,7 @@ export function AbsensiGuruInput() {
 
       const unsubscribeHistory = onSnapshot(q, (snapshot) => {
         const allRecords = snapshot.docs.map(docSnap => {
-          const data = docSnap.data();
+          const data = docSnap.data() || {};
 
           // Helper to convert Firestore timestamp to Date safely
           const toDate = (val: any) => val instanceof Timestamp ? val.toDate() : val;
@@ -164,9 +164,10 @@ export function AbsensiGuruInput() {
           return {
             ...data,
             id: docSnap.id,
-            waktu_masuk: toDate(data.waktu_masuk),
-            waktu_pulang: toDate(data.waktu_pulang),
-            timestamp: toDate(data.timestamp),
+            status: data?.status ?? "Hadir",
+            waktu_masuk: toDate(data?.waktu_masuk),
+            waktu_pulang: toDate(data?.waktu_pulang),
+            timestamp: toDate(data?.timestamp),
           } as TeacherAttendance;
         });
 

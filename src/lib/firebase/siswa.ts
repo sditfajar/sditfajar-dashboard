@@ -22,10 +22,18 @@ const PEMBAYARAN_COLLECTION = "pembayaran";
 export const subscribeToSiswa = (callback: (data: Siswa[]) => void) => {
   const q = query(collection(db, COLLECTION_NAME), orderBy("createdAt", "desc"));
   return onSnapshot(q, (snapshot) => {
-    const data = snapshot.docs.map((doc) => ({
-      ...doc.data(),
-      nisn: doc.id,
-    })) as Siswa[];
+    const data = snapshot.docs.map((doc) => {
+      const docData = doc.data() || {};
+      return {
+        ...docData,
+        namaLengkap: docData?.namaLengkap ?? "-",
+        kelas: docData?.kelas ?? "-",
+        jenisKelamin: docData?.jenisKelamin ?? "-",
+        status: docData?.status ?? "Aktif",
+        penerimaBansos: docData?.penerimaBansos ?? false,
+        nisn: doc.id,
+      } as Siswa;
+    });
     callback(data);
   });
 };

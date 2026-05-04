@@ -91,14 +91,31 @@ export default function RekapTagihanPage() {
       const siswaSnapshot = await getDocs(collection(db, "siswa"));
       const siswaData: Siswa[] = [];
       siswaSnapshot.forEach((doc) => {
-        siswaData.push({ id: doc.id, ...doc.data() } as Siswa);
+        const d = doc.data() || {};
+        siswaData.push({ 
+          id: doc.id, 
+          ...d,
+          nisn: d?.nisn ?? doc.id,
+          namaLengkap: d?.namaLengkap ?? "-",
+          kelas: d?.kelas ?? "-",
+          whatsappOrtu: d?.whatsappOrtu ?? "-",
+        } as Siswa);
       });
 
       // Fetch Keuangan
       const keuanganSnapshot = await getDocs(collection(db, "keuangan"));
       const keuanganData: Record<string, Keuangan> = {};
       keuanganSnapshot.forEach((doc) => {
-        keuanganData[doc.id] = { id: doc.id, ...doc.data() } as Keuangan;
+        const d = doc.data() || {};
+        keuanganData[doc.id] = { 
+          id: doc.id, 
+          ...d,
+          studentId: d?.studentId ?? doc.id,
+          namaLengkap: d?.namaLengkap ?? "-",
+          kelas: d?.kelas ?? "-",
+          tagihanBulanan: d?.tagihanBulanan ?? [],
+          tagihanSemesteran: d?.tagihanSemesteran ?? [],
+        } as Keuangan;
       });
 
       // Gabungkan data Siswa dan Keuangan (hanya yang sudah ada di koleksi keuangan)
@@ -323,10 +340,10 @@ export default function RekapTagihanPage() {
                     return (
                       <TableRow key={d.id} className="hover:bg-muted/30">
                         <TableCell className="font-medium sticky left-0 bg-background/95 backdrop-blur z-10 w-[200px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                          {d.namaLengkap}
+                          {d?.namaLengkap ?? "-"}
                         </TableCell>
                         <TableCell>
-                          {d.whatsappOrtu ? (
+                          {d?.whatsappOrtu && d.whatsappOrtu !== "-" ? (
                             <a
                               href={waLink}
                               target="_blank"
@@ -340,7 +357,7 @@ export default function RekapTagihanPage() {
                             <span className="text-muted-foreground text-xs italic">Kosong</span>
                           )}
                         </TableCell>
-                        <TableCell>{d.kelas || "-"}</TableCell>
+                        <TableCell>{d?.kelas ?? "-"}</TableCell>
 
                         {bulanVisible.map(bulan => {
                           const tb = k.tagihanBulanan?.find(t => t.bulan === bulan);

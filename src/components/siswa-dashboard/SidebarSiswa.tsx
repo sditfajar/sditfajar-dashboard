@@ -7,15 +7,17 @@ import {
   BookOpen,
   ClipboardList,
   Bell,
+  Calendar,
 } from "lucide-react";
 import { NavItem, SidebarNav } from "@/components/admin/SidebarNav";
 import { SidebarProfile } from "@/components/admin/SidebarProfile";
 
 export const siswaLinks: NavItem[] = [
   { name: "Dashboard", href: "/dashboard-siswa", icon: LayoutDashboard },
-  { name: "Kelas Saya", href: "/dashboard-siswa/kelas-saya", icon: BookOpen },
-  { name: "Tugas Saya", href: "/dashboard-siswa/tugas-saya", icon: ClipboardList },
-  { name: "Pengumuman", href: "/dashboard-siswa/pengumuman", icon: Bell },
+  { name: "Mata Pelajaran", href: "/mata-pelajaran", icon: BookOpen },
+  { name: "Jadwal Pelajaran", href: "/jadwal-siswa", icon: Calendar },
+  { name: "Tugas Saya", href: "/tugas-saya", icon: ClipboardList },
+  { name: "Pengumuman", href: "/pengumuman", icon: Bell },
 ];
 
 export function SidebarSiswa() {

@@ -43,16 +43,16 @@ export default function RiwayatKeuanganPage() {
         const riwayat: RiwayatPayment[] = [];
 
         keuanganSnapshot.forEach((doc) => {
-          const k = doc.data();
+          const k = doc.data() || {};
           
-          if (k.tagihanBulanan) {
+          if (k?.tagihanBulanan) {
             k.tagihanBulanan.forEach((tb: any) => {
               if (tb.status === "Lunas" && tb.tanggalBayar) {
                 const date = tb.tanggalBayar.toDate ? tb.tanggalBayar.toDate() : new Date(tb.tanggalBayar);
                 riwayat.push({
                   id: `${doc.id}-spp-${tb.bulan}`,
-                  namaLengkap: k.namaLengkap,
-                  kelas: k.kelas || "-",
+                  namaLengkap: k?.namaLengkap ?? "-",
+                  kelas: k?.kelas ?? "-",
                   tanggalBayar: date,
                   jenisPembayaran: `SPP ${tb.bulan}`,
                   jumlah: tb.nominal
@@ -61,14 +61,14 @@ export default function RiwayatKeuanganPage() {
             });
           }
 
-          if (k.tagihanSemesteran) {
+          if (k?.tagihanSemesteran) {
             k.tagihanSemesteran.forEach((ts: any) => {
               if (ts.status === "Lunas" && ts.tanggalBayar) {
                 const date = ts.tanggalBayar.toDate ? ts.tanggalBayar.toDate() : new Date(ts.tanggalBayar);
                 riwayat.push({
                   id: `${doc.id}-sem-${ts.semester}`,
-                  namaLengkap: k.namaLengkap,
-                  kelas: k.kelas || "-",
+                  namaLengkap: k?.namaLengkap ?? "-",
+                  kelas: k?.kelas ?? "-",
                   tanggalBayar: date,
                   jenisPembayaran: `Semester ${ts.semester}`,
                   jumlah: ts.nominal

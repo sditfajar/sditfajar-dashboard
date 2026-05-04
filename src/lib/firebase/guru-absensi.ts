@@ -41,12 +41,14 @@ export const getTodayAttendance = async (uid: string) => {
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
-    const data = docSnap.data();
+    const data = docSnap.data() || {};
     return {
       ...data,
-      waktu_masuk: data.waktu_masuk instanceof Timestamp ? data.waktu_masuk.toDate() : data.waktu_masuk,
-      waktu_pulang: data.waktu_pulang instanceof Timestamp ? data.waktu_pulang.toDate() : data.waktu_pulang,
-      timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : data.timestamp,
+      teacherName: data?.teacherName ?? "-",
+      status: data?.status ?? "Hadir",
+      waktu_masuk: data?.waktu_masuk instanceof Timestamp ? data.waktu_masuk.toDate() : data?.waktu_masuk,
+      waktu_pulang: data?.waktu_pulang instanceof Timestamp ? data.waktu_pulang.toDate() : data?.waktu_pulang,
+      timestamp: data?.timestamp instanceof Timestamp ? data.timestamp.toDate() : data?.timestamp,
     };
   }
   return null;
@@ -110,13 +112,15 @@ export const getMonthlyAttendance = async (uid: string, monthDate: Date) => {
 
   const snapshot = await getDocs(q);
   return snapshot.docs.map(docSnap => {
-    const data = docSnap.data();
+    const data = docSnap.data() || {};
     return {
       ...data,
       id: docSnap.id,
-      waktu_masuk: data.waktu_masuk instanceof Timestamp ? data.waktu_masuk.toDate() : data.waktu_masuk,
-      waktu_pulang: data.waktu_pulang instanceof Timestamp ? data.waktu_pulang.toDate() : data.waktu_pulang,
-      timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : data.timestamp,
+      teacherName: data?.teacherName ?? "-",
+      status: data?.status ?? "Hadir",
+      waktu_masuk: data?.waktu_masuk instanceof Timestamp ? data.waktu_masuk.toDate() : data?.waktu_masuk,
+      waktu_pulang: data?.waktu_pulang instanceof Timestamp ? data.waktu_pulang.toDate() : data?.waktu_pulang,
+      timestamp: data?.timestamp instanceof Timestamp ? data.timestamp.toDate() : data?.timestamp,
     } as TeacherAttendance;
   });
 };

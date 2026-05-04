@@ -26,10 +26,17 @@ export default function GuruPage() {
     try {
       const q = query(collection(db, "users"), where("role", "==", "teacher"));
       const snapshot = await getDocs(q);
-      const teachersList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const teachersList = snapshot.docs.map(doc => {
+        const d = doc.data() || {};
+        return {
+          id: doc.id,
+          ...d,
+          name: d?.name ?? "Guru Tanpa Nama",
+          email: d?.email ?? "-",
+          nip: d?.nip ?? "-",
+          status: d?.status ?? "Aktif",
+        };
+      });
       setData(teachersList);
     } catch (error) {
       console.error("Error fetching teachers:", error);

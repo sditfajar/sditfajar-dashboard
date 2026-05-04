@@ -285,11 +285,16 @@ export default function KontenPage() {
           <FadeIn>
             <button
               onClick={() => setIsFormOpen(true)}
-              className="group relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 dark:bg-primary/10 p-6 sm:p-8 transition-all hover:border-primary/60 hover:bg-primary/10 dark:hover:bg-primary/20 hover:shadow-lg cursor-pointer w-full h-full min-h-[160px]"
+              className="group relative flex flex-col items-center justify-center gap-3 rounded-xl overflow-hidden p-6 sm:p-8 transition-all hover:shadow-xl hover:shadow-green-500/20 hover:scale-[1.02] cursor-pointer w-full h-full min-h-[160px] bg-gradient-to-br from-green-500 via-emerald-500 to-teal-600 dark:from-green-600 dark:via-emerald-600 dark:to-teal-700"
             >
+              {/* Shimmer overlay */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              {/* Subtle radial glow */}
+              <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+
               <div className="relative">
                 <svg
-                  className="h-14 w-14 text-primary/60 group-hover:text-primary transition-colors"
+                  className="h-14 w-14 text-white/80 group-hover:text-white transition-colors"
                   viewBox="0 0 64 64"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
@@ -297,9 +302,9 @@ export default function KontenPage() {
                   <circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="2" strokeDasharray="6 4" className="animate-[spin_20s_linear_infinite]" />
                   <path d="M32 20V44M20 32H44" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="group-hover:stroke-[4] transition-all" />
                 </svg>
-                <Sparkles className="absolute -top-1 -right-1 h-5 w-5 text-yellow-500 animate-pulse opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Sparkles className="absolute -top-1 -right-1 h-5 w-5 text-yellow-300 animate-pulse opacity-70 group-hover:opacity-100 transition-opacity" />
               </div>
-              <span className="text-sm font-semibold text-primary/80 group-hover:text-primary transition-colors">
+              <span className="text-sm font-semibold text-white drop-shadow-sm">
                 Tambah Konten Baru
               </span>
             </button>
@@ -344,7 +349,7 @@ export default function KontenPage() {
         {/* ── Baris Bawah: Statistik Konten & Form YouTube ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <FadeIn className="lg:col-span-2">
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 h-full flex flex-col justify-between min-h-[300px]">
+            <div className="rounded-xl border border-green-500/20 bg-green-500/5 dark:bg-green-500/10 p-5 h-full flex flex-col justify-between min-h-[300px]">
               <div className="flex-1 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={newsChartData}>
@@ -364,13 +369,13 @@ export default function KontenPage() {
                       allowDecimals={false}
                     />
                     <RechartsTooltip
-                      cursor={{ fill: 'rgba(34, 197, 94, 0.1)' }}
-                      contentStyle={{ borderRadius: "8px", border: "1px solid rgba(34, 197, 94, 0.2)" }}
+                      cursor={{ fill: 'rgba(34, 197, 94, 0.15)' }}
+                      contentStyle={{ borderRadius: "8px", border: "1px solid rgba(34, 197, 94, 0.4)", backgroundColor: "hsl(var(--card))", color: "hsl(var(--foreground))" }}
                       formatter={(value: any) => [value + " Berita", "Jumlah"]}
                     />
                     <Bar 
                       dataKey="count" 
-                      fill="hsl(var(--primary))"
+                      fill="#22c55e"
                       radius={[4, 4, 0, 0]} 
                       barSize={40}
                     />
@@ -381,11 +386,11 @@ export default function KontenPage() {
           </FadeIn>
 
           <FadeIn className="lg:col-span-1">
-            <div className="rounded-xl border bg-card p-5 space-y-4 h-full flex flex-col justify-between">
+            <div className="rounded-xl border border-green-500/20 bg-green-500/5 dark:bg-green-500/10 p-5 space-y-4 h-full flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30">
-                    <Youtube className="h-4 w-4 text-red-600" />
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30">
+                    <Youtube className="h-4 w-4 text-green-600" />
                   </div>
                   <div>
                     <h2 className="font-semibold text-sm">Video Profil YouTube</h2>
@@ -418,7 +423,7 @@ export default function KontenPage() {
                   <Button
                     onClick={handleSaveYoutube}
                     disabled={isSavingYoutube || !youtubeUrl.trim()}
-                    className="gap-1.5 shrink-0"
+                    className="gap-1.5 shrink-0 bg-green-600 hover:bg-green-700 text-white"
                     size="sm"
                   >
                     <Save className="h-4 w-4" />

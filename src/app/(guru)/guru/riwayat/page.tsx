@@ -90,14 +90,15 @@ export default function RiwayatBulananPage() {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const records = snapshot.docs.map(docSnap => {
-        const data = docSnap.data();
+        const data = docSnap.data() || {};
         const toDate = (val: any) => val instanceof Timestamp ? val.toDate() : val;
         return {
           ...data,
           id: docSnap.id,
-          waktu_masuk: toDate(data.waktu_masuk),
-          waktu_pulang: toDate(data.waktu_pulang),
-          timestamp: toDate(data.timestamp),
+          status: data?.status ?? "Hadir",
+          waktu_masuk: toDate(data?.waktu_masuk),
+          waktu_pulang: toDate(data?.waktu_pulang),
+          timestamp: toDate(data?.timestamp),
         } as TeacherAttendance;
       });
       setHistory(records);

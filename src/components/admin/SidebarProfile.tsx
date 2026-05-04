@@ -53,13 +53,14 @@ export function SidebarProfile() {
         let email = user.email;
 
         if (userDocSnap.exists()) {
-          const data = userDocSnap.data();
-          if (data.role === "teacher") role = "Guru";
-          else if (data.role === "student" || data.role === "murid") role = "Siswa";
+          const data = userDocSnap.data() || {};
+          const userRole = data?.role ?? "admin";
+          if (userRole === "teacher") role = "Guru";
+          else if (userRole === "student" || userRole === "murid") role = "Siswa";
           else role = "Admin";
 
-          if (data.photoURL) photoURL = data.photoURL;
-          if (data.name) displayName = data.name;
+          if (data?.photoURL) photoURL = data.photoURL;
+          if (data?.name) displayName = data.name;
         }
 
         let subtitle = email || role;

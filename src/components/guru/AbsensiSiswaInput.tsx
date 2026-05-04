@@ -97,13 +97,13 @@ export function AbsensiSiswaInput() {
             const userDocRef = doc(db, "users", user.uid);
             const userDocSnap = await getDoc(userDocRef);
             if (userDocSnap.exists()) {
-              const data = userDocSnap.data();
-              setGuruName(data.name || user.displayName || "Guru");
+              const data = userDocSnap.data() || {};
+              setGuruName(data?.name ?? user.displayName ?? "Guru");
             } else {
-              setGuruName(user.displayName || "Guru");
+              setGuruName(user.displayName ?? "Guru");
             }
           } catch {
-            setGuruName(user.displayName || "Guru");
+            setGuruName(user.displayName ?? "Guru");
           }
         }
       }

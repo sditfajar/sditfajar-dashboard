@@ -39,7 +39,17 @@ export default function DashboardPage() {
 
     // Subscribe to keuangan collection for real-time charts
     const unsub = onSnapshot(collection(db, "keuangan"), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const data = snapshot.docs.map(doc => {
+        const d = doc.data() || {};
+        return {
+          id: doc.id,
+          ...d,
+          namaLengkap: d?.namaLengkap ?? "-",
+          kelas: d?.kelas ?? "-",
+          tagihanBulanan: d?.tagihanBulanan ?? [],
+          tagihanSemesteran: d?.tagihanSemesteran ?? [],
+        };
+      });
       setKeuanganData(data);
     });
 

@@ -96,14 +96,29 @@ export default function SPPBulananPage() {
       const siswaSnapshot = await getDocs(collection(db, "siswa"));
       const siswaData: Siswa[] = [];
       siswaSnapshot.forEach((doc) => {
-        siswaData.push({ id: doc.id, ...doc.data() } as Siswa);
+        const d = doc.data() || {};
+        siswaData.push({ 
+          id: doc.id, 
+          ...d,
+          namaLengkap: d?.namaLengkap ?? "-",
+          kelas: d?.kelas ?? "-",
+        } as Siswa);
       });
 
       // Fetch Keuangan
       const keuanganSnapshot = await getDocs(collection(db, "keuangan"));
       const keuanganData: Record<string, Keuangan> = {};
       keuanganSnapshot.forEach((doc) => {
-        keuanganData[doc.id] = { id: doc.id, ...doc.data() } as Keuangan;
+        const d = doc.data() || {};
+        keuanganData[doc.id] = { 
+          id: doc.id, 
+          ...d,
+          studentId: d?.studentId ?? doc.id,
+          namaLengkap: d?.namaLengkap ?? "-",
+          kelas: d?.kelas ?? "-",
+          tagihanBulanan: d?.tagihanBulanan ?? [],
+          tagihanSemesteran: d?.tagihanSemesteran ?? [],
+        } as Keuangan;
       });
 
       setSiswa(siswaData);
@@ -380,8 +395,8 @@ export default function SPPBulananPage() {
 
                     return (
                       <TableRow key={s.id}>
-                        <TableCell className="font-medium">{s.namaLengkap}</TableCell>
-                        <TableCell>{s.kelas || "-"}</TableCell>
+                        <TableCell className="font-medium">{s?.namaLengkap ?? "-"}</TableCell>
+                        <TableCell>{s?.kelas ?? "-"}</TableCell>
                         <TableCell>
                           {k ? (
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBulanIni === 'Lunas' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'}`}>

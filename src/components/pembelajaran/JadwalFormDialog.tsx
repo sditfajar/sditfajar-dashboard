@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { Schedule, Subject, TeacherInfo, getSubjects, getTeachersForDropdown } from "@/lib/firebase/pembelajaran";
+import { Schedule, Subject, TeacherInfo, getSubjectsByKategori, getTeachersForDropdown, getClasses, KelasInfo } from "@/lib/firebase/pembelajaran";
 
 interface JadwalFormDialogProps {
   open: boolean;
@@ -42,18 +42,22 @@ export function JadwalFormDialog({
   
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [teachers, setTeachers] = useState<TeacherInfo[]>([]);
+  const [classes, setClasses] = useState<KelasInfo[]>([]);
   const [loadingData, setLoadingData] = useState(false);
+  const [isLoadingMapel, setIsLoadingMapel] = useState(false);
+
+  const selectedKelas = watch("kelas");
 
   useEffect(() => {
     if (open) {
       const fetchData = async () => {
         setLoadingData(true);
         try {
-          const [fetchedSubjects, fetchedTeachers] = await Promise.all([
-            getSubjects(),
+          const [fetchedClasses, fetchedTeachers] = await Promise.all([
+            getClasses(),
             getTeachersForDropdown()
           ]);
-          setSubjects(fetchedSubjects);
+          setClasses(fetchedClasses);
           setTeachers(fetchedTeachers);
         } catch (error) {
           console.error("Gagal memuat data referensi", error);
@@ -77,6 +81,26 @@ export function JadwalFormDialog({
       }
     }
   }, [open, defaultValues, isEditing, setValue, reset]);
+
+  useEffect(() => {
+    if (selectedKelas && open) {
+      const fetchMapel = async () => {
+        setIsLoadingMapel(true);
+        try {
+          const kategori = selectedKelas.match(/\d+/)?.[0] || selectedKelas;
+          const fetchedSubjects = await getSubjectsByKategori(kategori);
+          setSubjects(fetchedSubjects);
+        } catch (error) {
+          console.error("Gagal memuat mapel:", error);
+        } finally {
+          setIsLoadingMapel(false);
+        }
+      };
+      fetchMapel();
+    } else {
+      setSubjects([]);
+    }
+  }, [selectedKelas, open]);
 
   const handleMapelChange = (val: string) => {
     const selected = subjects.find(s => s.id === val);
@@ -129,10 +153,26 @@ export function JadwalFormDialog({
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Kelas</label>
-                <Input
-                  {...register("kelas", { required: "Kelas wajib diisi" })}
-                  placeholder="Contoh: 1A, 2B"
-                />
+                <Select 
+                  value={watch("kelas") || ""} 
+                  onValueChange={(val) => {
+                    setValue("kelas", val, { shouldValidate: true });
+                    setValue("mapelId", "");
+                    setValue("mapelName", "");
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih Kelas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map(c => (
+                      <SelectItem key={c.id} value={c.nama_kelas}>
+                        {c.nama_kelas}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <input type="hidden" {...register("kelas", { required: "Kelas wajib dipilih" })} />
                 {errors.kelas && <p className="text-xs text-destructive">{errors.kelas.message}</p>}
               </div>
             </div>
@@ -162,9 +202,10 @@ export function JadwalFormDialog({
               <Select 
                 value={watch("mapelId") || ""} 
                 onValueChange={handleMapelChange}
+                disabled={!selectedKelas || isLoadingMapel}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih Mapel" />
+                  <SelectValue placeholder={isLoadingMapel ? "Memuat mapel..." : "Pilih Mapel"} />
                 </SelectTrigger>
                 <SelectContent>
                   {subjects.map(subject => (

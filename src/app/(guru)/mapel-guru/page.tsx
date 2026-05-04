@@ -36,7 +36,16 @@ export default function GuruMapelPage() {
       q,
       (snapshot) => {
         const data = snapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as Subject)
+          (doc) => {
+            const d = doc.data() || {};
+            return {
+              id: doc.id,
+              ...d,
+              nama_mapel: d?.nama_mapel ?? "-",
+              kategori_kelas: d?.kategori_kelas ?? "-",
+              tipe: d?.tipe ?? "Umum",
+            } as Subject;
+          }
         );
         data.sort((a, b) => {
           if (a.kategori_kelas === b.kategori_kelas) {

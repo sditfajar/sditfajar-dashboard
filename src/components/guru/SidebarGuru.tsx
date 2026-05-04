@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { LayoutDashboard, Calendar, Users, ClipboardList, MapPinCheck, BookOpen, Newspaper } from "lucide-react";
+import { LayoutDashboard, Calendar, Users, ClipboardList, MapPinCheck, BookOpen, Newspaper, Library, FileText } from "lucide-react";
 import { NavItem, SidebarNav } from "@/components/admin/SidebarNav";
 import { SidebarProfile } from "@/components/admin/SidebarProfile";
 
@@ -10,6 +10,8 @@ export const guruLinks: NavItem[] = [
   { name: "Dashboard Guru", href: "/dashboard-guru", icon: LayoutDashboard },
   { name: "Mata Pelajaran", href: "/mapel-guru", icon: BookOpen },
   { name: "Jadwal Mengajar", href: "/jadwal-guru", icon: Calendar },
+  { name: "Manajemen Materi", href: "/manajemen-materi", icon: Library },
+  { name: "Manajemen Tugas", href: "/manajemen-tugas", icon: FileText },
   { name: "Daftar Siswa", href: "#", icon: Users, disabled: true },
   { name: "Absen Kehadiran", href: "/absensi-guru", icon: MapPinCheck },
   { name: "Absensi Siswa", href: "/absensi-siswa", icon: ClipboardList },

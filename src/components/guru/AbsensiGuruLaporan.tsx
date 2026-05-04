@@ -90,13 +90,18 @@ export function AbsensiGuruLaporan() {
       q,
       (snapshot) => {
         const records: TeacherAttendance[] = snapshot.docs.map((docSnap) => {
-          const d = docSnap.data();
+          const d = docSnap.data() || {};
           return {
             ...d,
             id: docSnap.id,
-            timestamp: d.timestamp ? (d.timestamp as Timestamp).toDate() : new Date(),
-            waktu_masuk: d.waktu_masuk ? (d.waktu_masuk as Timestamp).toDate() : null,
-            waktu_pulang: d.waktu_pulang ? (d.waktu_pulang as Timestamp).toDate() : null,
+            teacherName: d?.teacherName ?? "Guru Tanpa Nama",
+            status: d?.status ?? "Hadir",
+            distance: d?.distance ?? 0,
+            latitude: d?.latitude ?? 0,
+            longitude: d?.longitude ?? 0,
+            timestamp: d?.timestamp ? (d.timestamp as Timestamp).toDate() : new Date(),
+            waktu_masuk: d?.waktu_masuk ? (d.waktu_masuk as Timestamp).toDate() : null,
+            waktu_pulang: d?.waktu_pulang ? (d.waktu_pulang as Timestamp).toDate() : null,
           } as TeacherAttendance;
         });
         setData(records);

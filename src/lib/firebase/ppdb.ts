@@ -54,10 +54,19 @@ export const getPPDBData = async (): Promise<CalonSiswa[]> => {
   const q = query(collection(db, COLLECTION_NAME), orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
   
-  return snapshot.docs.map((doc) => ({
-    ...(doc.data() as Omit<CalonSiswa, "id">),
-    id: doc.id,
-  }));
+  return snapshot.docs.map((doc) => {
+    const data = doc.data() || {};
+    return {
+      ...(data as Omit<CalonSiswa, "id">),
+      namaLengkap: data?.namaLengkap ?? "-",
+      status: data?.status ?? "Baru",
+      asalSekolah: data?.asalSekolah ?? "-",
+      namaAyah: data?.namaAyah ?? "-",
+      namaIbu: data?.namaIbu ?? "-",
+      noWA: data?.noWA ?? "-",
+      id: doc.id,
+    };
+  });
 };
 
 export const updatePPDBStatus = async (id: string, status: PPDBStatus) => {

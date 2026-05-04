@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Sparkles,
   Clock,
+  Library,
 } from "lucide-react";
 import { FadeIn } from "@/components/ui/fade-in";
 
@@ -61,6 +62,15 @@ const menuCards: MenuCard[] = [
     gradient: "from-violet-500/10 via-purple-500/5 to-transparent",
     iconBg: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
   },
+  {
+    title: "Manajemen Materi",
+    description: "Upload dan kelola materi pembelajaran, modul, serta bahan ajar digital.",
+    href: "/manajemen-materi",
+    icon: Library,
+    gradient: "from-pink-500/10 via-rose-500/5 to-transparent",
+    iconBg: "bg-pink-500/15 text-pink-600 dark:text-pink-400",
+    badge: "Baru",
+  },
 ];
 
 export default function DashboardGuruPage() {
@@ -96,12 +106,13 @@ export default function DashboardGuruPage() {
         }
         const snap = await getDoc(doc(db, "users", user.uid));
         if (snap.exists()) {
-          setGuruName(snap.data().name || user.displayName || "Guru");
+          const data = snap.data() || {};
+          setGuruName(data?.name ?? user.displayName ?? "Guru");
         } else {
-          setGuruName(user.displayName || "Guru");
+          setGuruName(user.displayName ?? "Guru");
         }
       } catch {
-        setGuruName(user.displayName || "Guru");
+        setGuruName(user.displayName ?? "Guru");
       }
     });
     return () => unsub();
