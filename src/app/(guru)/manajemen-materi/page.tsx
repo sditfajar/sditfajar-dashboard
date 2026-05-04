@@ -15,7 +15,7 @@ export default function ManajemenMateriPage() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) return;
-      
+
       try {
         const data = await getSchedulesByTeacher(user.uid);
         setSchedules(data);
@@ -25,7 +25,7 @@ export default function ManajemenMateriPage() {
         setIsLoading(false);
       }
     });
-    
+
     return () => unsub();
   }, []);
 
@@ -72,8 +72,8 @@ export default function ManajemenMateriPage() {
           {subjectList.map((schedule, index) => (
             <FadeIn key={schedule.id || `${schedule.mapelId}-${schedule.kelas}`} delay={index * 0.05}>
               <SubjectCard
-                title={schedule.mapelName}
-                description={`Mata Pelajaran: ${schedule.mapelName}`}
+                title={schedule.mapelName || "-"}
+                description={`Mata Pelajaran: ${schedule.mapelName || "-"}`}
                 badgeText={`Kelas ${schedule.kelas}`}
                 href="#"
                 role="guru"
