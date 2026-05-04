@@ -8,6 +8,7 @@ import { subscribeToSiswa, addSiswa, updateSiswa, deleteSiswa } from "@/lib/fire
 import { toast } from "sonner";
 import { SuccessDialog } from "@/components/ui/success-dialog";
 import { FadeIn } from "@/components/ui/fade-in";
+import { createStudentUser } from "@/app/actions/createStudentUser";
 
 export default function SiswaPage() {
   const [data, setData] = useState<Siswa[]>([]);
@@ -53,10 +54,14 @@ export default function SiswaPage() {
 
   const handleSubmitForm = async (formData: SiswaFormValues) => {
     try {
+      const { buatAkunLms, ...siswaData } = formData;
+
       if (editingSiswa) {
         await updateSiswa(editingSiswa.nisn, {
           namaLengkap: formData.namaLengkap,
           kelas: formData.kelas,
+          tempatLahir: formData.tempatLahir,
+          tanggalLahir: formData.tanggalLahir,
           namaWali: formData.namaWali,
           whatsappOrtu: formData.whatsappOrtu,
           status: formData.status,
@@ -72,14 +77,50 @@ export default function SiswaPage() {
           });
           return;
         }
-        await addSiswa(formData);
+
+        if (buatAkunLms) {
+          if (!formData.tempatLahir || !formData.tanggalLahir) {
+            toast.error("Gagal Membuat Akun LMS", {
+              description: "Tempat dan Tanggal Lahir wajib diisi jika opsi Buat Akun LMS dicentang.",
+            });
+            return;
+          }
+
+          const dateParts = formData.tanggalLahir.split("-");
+          const formattedDate = `${dateParts[2]}${dateParts[1]}${dateParts[0]}`;
+          const cleanTempatLahir = formData.tempatLahir.toLowerCase().replace(/\s/g, "");
+          const password = `${cleanTempatLahir}${formattedDate}`;
+          const email = `${formData.nisn}@siswa.sditfajar.com`;
+
+          toast.loading("Membuat akun LMS...", { id: `create-lms-${formData.nisn}` });
+          const authRes = await createStudentUser({
+            email,
+            password,
+            nisn: formData.nisn,
+            namaLengkap: formData.namaLengkap,
+          });
+
+          if (!authRes.success) {
+            toast.dismiss(`create-lms-${formData.nisn}`);
+            toast.error("Akun LMS Gagal Dibuat", { description: authRes.error });
+            return; // stop execution if auth creation fails
+          }
+          
+          toast.success("Akun LMS Dibuat", {
+            id: `create-lms-${formData.nisn}`,
+            description: `Akses: ${email} | Password: ${password}`,
+            duration: 10000,
+          });
+        }
+
+        await addSiswa(siswaData as any); // using as any because SiswaData omit is slightly complex from z.infer omitting buatAkunLms
         toast.success("Siswa Ditambahkan! 🎉", {
           description: `${formData.namaLengkap} berhasil ditambahkan ke Kelas ${formData.kelas}.`,
         });
         setSuccessPopup({
           open: true,
           title: "Siswa Berhasil Ditambahkan!",
-          description: `${formData.namaLengkap} telah terdaftar di Kelas ${formData.kelas}.`,
+          description: `${formData.namaLengkap} telah terdaftar di Kelas ${formData.kelas}. ${buatAkunLms ? 'Akun LMS juga telah dibuat.' : ''}`,
         });
       }
       setIsDialogOpen(false);

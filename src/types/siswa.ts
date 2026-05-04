@@ -6,6 +6,8 @@ export interface Siswa {
   nisn: string;
   namaLengkap: string;
   kelas: string;
+  tempatLahir?: string;
+  tanggalLahir?: string;
   namaWali: string;
   whatsappOrtu: string;
   status: SiswaStatus;

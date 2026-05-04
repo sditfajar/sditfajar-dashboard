@@ -53,6 +53,8 @@ export default function LoginPage() {
       if (response.ok) {
         if (userRole === "teacher") {
           router.push("/dashboard-guru");
+        } else if (userRole === "student" || userRole === "murid") {
+          router.push("/dashboard-siswa");
         } else {
           router.push("/admin");
         }

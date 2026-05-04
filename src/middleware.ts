@@ -9,7 +9,8 @@ const protectedRoutes = [
   '/alumni',
   '/konten',
   '/absensi',
-  '/dashboard-guru'
+  '/dashboard-guru',
+  '/dashboard-siswa'
 ];
 
 export function middleware(request: NextRequest) {
@@ -30,9 +31,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard-guru', request.url));
   }
 
+  // Role locking: if user is a student and tries to access an admin/teacher route, redirect to dashboard-siswa
+  if (session && (userRole === 'student' || userRole === 'murid') && isProtectedRoute && !request.nextUrl.pathname.startsWith('/dashboard-siswa')) {
+    return NextResponse.redirect(new URL('/dashboard-siswa', request.url));
+  }
+
   if (session && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/')) {
     if (userRole === 'teacher') {
       return NextResponse.redirect(new URL('/dashboard-guru', request.url));
+    }
+    if (userRole === 'student' || userRole === 'murid') {
+      return NextResponse.redirect(new URL('/dashboard-siswa', request.url));
     }
     return NextResponse.redirect(new URL('/admin', request.url));
   }
