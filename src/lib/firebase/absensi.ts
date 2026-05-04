@@ -48,8 +48,11 @@ export const getActiveSiswa = async (): Promise<Siswa[]> => {
         jenisKelamin: docData?.jenisKelamin ?? "-",
         status: docData?.status ?? "Aktif",
         penerimaBansos: docData?.penerimaBansos ?? false,
+        namaWali: docData?.namaWali ?? "-",
+        whatsappOrtu: docData?.whatsappOrtu ?? "-",
+        createdAt: docData?.createdAt ?? new Date().toISOString(),
         nisn: doc.id,
-      } as Siswa;
+      } as unknown as Siswa;
     }
   );
 };
@@ -74,7 +77,7 @@ export const getAbsensiByDate = async (dateStr: string): Promise<Absensi[]> => {
         keterangan: docData?.keterangan ?? "-",
         studentName: docData?.studentName ?? "-",
         attendanceId: doc.id,
-      } as Absensi;
+      } as unknown as Absensi;
     }
   );
 };
@@ -125,7 +128,7 @@ export const getRekapAbsensiBulanan = async (
         keterangan: docData?.keterangan ?? "-",
         studentName: docData?.studentName ?? "-",
         attendanceId: doc.id,
-      } as Absensi;
+      } as unknown as Absensi;
     }
   );
 };
