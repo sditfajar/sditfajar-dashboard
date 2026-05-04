@@ -47,8 +47,8 @@ import {
 import { auth, db } from "@/lib/firebase/config";
 
 // KOORDINAT SEKOLAH SDIT Fajar
-const SCHOOL_LAT = -6.414005026796305;
-const SCHOOL_LNG = 106.8654741102322;
+const SCHOOL_LAT = -6.2594809123131006;
+const SCHOOL_LNG = 106.84364829185279;
 
 // Radius 200 Meter
 const MAX_DISTANCE_KM = 0.2;
@@ -99,7 +99,7 @@ export function AbsensiGuruInput() {
   const [pulangTime, setPulangTime] = useState<Date | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [history, setHistory] = useState<TeacherAttendance[]>([]);
-  
+
   // Generate 7 days of current week (Monday to Sunday)
   const startOfCurrentWeek = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfCurrentWeek, i));
@@ -505,8 +505,8 @@ export function AbsensiGuruInput() {
                     const isWeekend = isSaturday || isSunday;
 
                     return (
-                      <TableRow 
-                        key={dateStr} 
+                      <TableRow
+                        key={dateStr}
                         className={isWeekend ? "bg-red-500/5 dark:bg-red-900/10" : ""}
                       >
                         <TableCell className="font-medium whitespace-nowrap">

@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Menu, LogOut } from "lucide-react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -24,7 +22,6 @@ interface NavbarProps {
 }
 
 export function Navbar({ isGuruMode = false }: NavbarProps) {
-  const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -76,20 +73,6 @@ export function Navbar({ isGuruMode = false }: NavbarProps) {
           </div>
         </SheetContent>
       </Sheet>
-
-      {/* Mobile Title (Hidden on md and up) */}
-      <div className="flex items-center gap-2 lg:hidden">
-        <Image
-          src="/favicon.png"
-          alt="Logo SDIT Fajar"
-          width={28}
-          height={28}
-          className="rounded-md"
-        />
-        <span className="font-semibold text-sm truncate max-w-[120px] sm:max-w-[200px]">
-          {isGuruMode ? "Portal Guru" : "Admin SDIT Fajar"}
-        </span>
-      </div>
 
       <div className="flex-1">
         {/* Placeholder for Search or other topbar actions */}
