@@ -28,11 +28,7 @@ export const subscribeToSiswa = (callback: (data: Siswa[]) => void) => {
         ...docData,
         namaLengkap: docData?.namaLengkap ?? "-",
         kelas: docData?.kelas ?? "-",
-        jenisKelamin: docData?.jenisKelamin ?? "-",
-        status: docData?.status ?? "Aktif",
-        penerimaBansos: docData?.penerimaBansos ?? false,
-        nisn: doc.id,
-      } as Siswa;
+      } as unknown as Siswa;
     });
     callback(data);
   });
@@ -41,7 +37,7 @@ export const subscribeToSiswa = (callback: (data: Siswa[]) => void) => {
 // Add new siswa
 export const addSiswa = async (data: Omit<Siswa, "createdAt">) => {
   const docRef = doc(collection(db, COLLECTION_NAME), data.nisn);
-  
+
   await setDoc(docRef, {
     ...data,
     createdAt: serverTimestamp(),
@@ -63,8 +59,8 @@ export const updateSiswa = async (nisn: string, data: Partial<Siswa>) => {
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("nisn", "==", nisn));
       const snapshot = await getDocs(q);
-      
-      const updatePromises = snapshot.docs.map((userDoc) => 
+
+      const updatePromises = snapshot.docs.map((userDoc) =>
         updateDoc(doc(db, "users", userDoc.id), { name: data.namaLengkap })
       );
       await Promise.all(updatePromises);
