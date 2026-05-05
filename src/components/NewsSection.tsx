@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Loader2, X, Newspaper } from "lucide-react";
+import Link from "next/link";
 import { KontenBerita } from "@/types/konten";
 import { getKontenBeritaPublic, getYoutubeEmbedUrl } from "@/lib/firebase/konten";
 import { format } from "date-fns";
@@ -153,8 +154,10 @@ export function NewsSection() {
         
         {news.length > 0 && (
           <FadeIn className="mt-16 flex justify-center">
-            <Button variant="outline" size="lg" className="rounded-full px-8 hover:bg-primary hover:text-primary-foreground transition-all duration-300">
-              Lihat Semua Berita
+            <Button asChild variant="outline" size="lg" className="rounded-full px-8 hover:bg-primary hover:text-primary-foreground transition-all duration-300">
+              <Link href="/berita">
+                Lihat Semua Berita
+              </Link>
             </Button>
           </FadeIn>
         )}

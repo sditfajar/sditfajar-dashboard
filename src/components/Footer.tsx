@@ -49,13 +49,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="#akademik" className="hover:text-primary transition-colors">
-                  Program Akademik
+                <Link href="#manajemen" className="hover:text-primary transition-colors">
+                  Manajemen Sekolah
                 </Link>
               </li>
               <li>
-                <Link href="#manajemen" className="hover:text-primary transition-colors">
-                  Manajemen Sekolah
+                <Link href="#akademik" className="hover:text-primary transition-colors">
+                  Program Akademik
                 </Link>
               </li>
               <li>
