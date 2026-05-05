@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/admin/Sidebar";
 import { Navbar } from "@/components/admin/Navbar";
+import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminAuth } from "@/lib/firebase/admin";
@@ -39,6 +40,7 @@ export default async function AdminLayout({
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
           {children}
         </main>
+        <DashboardFooter />
       </div>
     </div>
   );

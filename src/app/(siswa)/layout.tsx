@@ -1,5 +1,6 @@
 import { SidebarSiswa } from "@/components/siswa-dashboard/SidebarSiswa";
 import { NavbarSiswa } from "@/components/siswa-dashboard/NavbarSiswa";
+import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminAuth } from "@/lib/firebase/admin";
@@ -41,6 +42,7 @@ export default async function SiswaLayout({
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-w-[100vw] lg:max-w-none">
           {children}
         </main>
+        <DashboardFooter />
       </div>
     </div>
   );

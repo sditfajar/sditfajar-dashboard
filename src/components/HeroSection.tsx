@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -57,8 +59,15 @@ export function HeroSection() {
               Mulai Pendaftaran <ArrowRight className="w-4 h-4" />
             </Link>
           </Button>
-          <Button size="lg" variant="outline" className="h-12 px-8 text-base bg-background/50 backdrop-blur-sm transition-transform hover:scale-105" asChild>
-            <Link href="#akademik">Jelajahi Program</Link>
+          <Button
+            size="lg"
+            variant="outline"
+            className="h-12 px-8 text-base bg-background/50 backdrop-blur-sm transition-transform hover:scale-105"
+            onClick={() =>
+              document.getElementById("berita")?.scrollIntoView({ behavior: "smooth" })
+            }
+          >
+            Pelajari Lebih Lanjut
           </Button>
         </div>
       </FadeIn>

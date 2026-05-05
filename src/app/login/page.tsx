@@ -21,6 +21,7 @@ const tabs = [
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [nisn, setNisn] = useState("");
+  const [nip, setNip] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +37,8 @@ export default function LoginPage() {
       let loginEmail = email;
       if (activeTab === "siswa") {
         loginEmail = `${nisn}@sditfajar.com`;
+      } else if (activeTab === "guru") {
+        loginEmail = `${nip}@sditfajar.sch.id`;
       }
 
       const userCredential = await signInWithEmailAndPassword(auth, loginEmail, password);
@@ -114,7 +117,7 @@ export default function LoginPage() {
                     setActiveTab(tab.id);
                   }}
                   className={`${activeTab === tab.id
-                    ? "text-primary"
+                    ? "text-green-600"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                     } relative flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors outline-none`}
                 >
@@ -152,13 +155,28 @@ export default function LoginPage() {
                   className="focus-visible:ring-green-500"
                 />
               </div>
+            ) : activeTab === "guru" ? (
+              <div className="grid gap-2">
+                <Label htmlFor="nip">NIP</Label>
+                <Input
+                  id="nip"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="Masukkan NIP Anda"
+                  required
+                  value={nip}
+                  onChange={(e) => setNip(e.target.value.replace(/\D/g, ""))}
+                  className="focus-visible:ring-green-500"
+                />
+              </div>
             ) : (
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder={activeTab === "guru" ? "guru@sditfajar.sch.id" : "admin@sditfajar.sch.id"}
+                  placeholder="admin@sditfajar.sch.id"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

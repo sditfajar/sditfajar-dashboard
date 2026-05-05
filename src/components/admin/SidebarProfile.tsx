@@ -38,6 +38,8 @@ export function SidebarProfile() {
         let cachedSubtitle = parsed.subtitle || user.email || parsed.role;
         if (parsed.role === "Siswa" && user.email) {
           cachedSubtitle = `NISN: ${user.email.split("@")[0]}`;
+        } else if (parsed.role === "Guru" && user.email) {
+          cachedSubtitle = `NIP: ${user.email.split("@")[0]}`;
         }
         setProfile({ ...parsed, email: user.email, subtitle: cachedSubtitle });
         setIsLoading(false);
@@ -66,6 +68,8 @@ export function SidebarProfile() {
         let subtitle = email || role;
         if (role === "Siswa" && email) {
           subtitle = `NISN: ${email.split("@")[0]}`;
+        } else if (role === "Guru" && email) {
+          subtitle = `NIP: ${email.split("@")[0]}`;
         }
 
         const newProfile = { displayName, role, email, photoURL, subtitle };

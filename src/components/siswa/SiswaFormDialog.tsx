@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Siswa } from "@/types/siswa";
@@ -37,12 +38,16 @@ const toTitleCase = (str: string) =>
 
 const formSchema = z.object({
   nisn: z.string().min(1, "NISN wajib diisi"),
+  nik: z.string().optional(),
   namaLengkap: z.string().min(1, "Nama lengkap wajib diisi"),
   kelas: z.string().min(1, "Kelas wajib diisi"),
   namaWali: z.string().min(1, "Nama wali wajib diisi"),
   whatsappOrtu: z.string().min(1, "Nomor WhatsApp wajib diisi"),
   tempatLahir: z.string().optional(),
   tanggalLahir: z.string().optional(),
+  jenisKelamin: z.string().optional(),
+  agama: z.string().optional(),
+  alamatLengkap: z.string().optional(),
   buatAkunLms: z.boolean(),
   status: z.enum(["Aktif", "Tidak Aktif", "Lulus"] as const),
 });
@@ -68,12 +73,16 @@ export function SiswaFormDialog({
     resolver: zodResolver(formSchema),
     defaultValues: {
       nisn: "",
+      nik: "",
       namaLengkap: "",
       kelas: "",
       namaWali: "",
       whatsappOrtu: "",
       tempatLahir: "",
       tanggalLahir: "",
+      jenisKelamin: "",
+      agama: "",
+      alamatLengkap: "",
       buatAkunLms: false,
       status: "Aktif",
     },
@@ -83,12 +92,16 @@ export function SiswaFormDialog({
     if (defaultValues && open) {
       form.reset({
         nisn: defaultValues.nisn,
+        nik: defaultValues.nik || "",
         namaLengkap: defaultValues.namaLengkap,
         kelas: defaultValues.kelas,
         namaWali: defaultValues.namaWali,
         whatsappOrtu: defaultValues.whatsappOrtu,
         tempatLahir: defaultValues.tempatLahir || "",
         tanggalLahir: defaultValues.tanggalLahir || "",
+        jenisKelamin: defaultValues.jenisKelamin || "",
+        agama: defaultValues.agama || "",
+        alamatLengkap: defaultValues.alamatLengkap || "",
         buatAkunLms: false, // reset toggle on edit
         status: defaultValues.status,
       });
@@ -129,6 +142,19 @@ export function SiswaFormDialog({
             />
             <FormField
               control={form.control}
+              name="nik"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>NIK</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Masukkan NIK" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="namaLengkap"
               render={({ field }) => (
                 <FormItem>
@@ -161,6 +187,55 @@ export function SiswaFormDialog({
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="jenisKelamin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Jenis Kelamin</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Laki-laki">Laki-laki</SelectItem>
+                        <SelectItem value="Perempuan">Perempuan</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="agama"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Agama</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Islam">Islam</SelectItem>
+                        <SelectItem value="Kristen">Kristen</SelectItem>
+                        <SelectItem value="Katolik">Katolik</SelectItem>
+                        <SelectItem value="Hindu">Hindu</SelectItem>
+                        <SelectItem value="Buddha">Buddha</SelectItem>
+                        <SelectItem value="Konghucu">Konghucu</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -189,6 +264,19 @@ export function SiswaFormDialog({
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="alamatLengkap"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Alamat Lengkap</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Masukkan alamat lengkap" className="resize-none" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="namaWali"

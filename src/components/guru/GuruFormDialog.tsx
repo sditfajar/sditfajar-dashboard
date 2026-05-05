@@ -39,14 +39,14 @@ const toTitleCase = (str: string) =>
 
 const formSchema = z.object({
   name: z.string().min(1, "Nama lengkap wajib diisi"),
-  nip: z.string().optional(),
+  nip: z.string().min(1, "NIP wajib diisi").regex(/^\d+$/, "NIP hanya boleh berisi angka tanpa spasi"),
   photoURL: z.string().optional().or(z.literal("")),
   gender: z.enum(["L", "P"], { message: "Pilih jenis kelamin" }),
   position: z.string().min(1, "Posisi wajib diisi"),
   classTeacher: z.string().optional(),
   subject: z.string().optional(),
   phone: z.string().min(1, "Nomor WhatsApp wajib diisi"),
-  email: z.string().email("Email tidak valid"),
+  email: z.string().optional(),
   password: z.string().optional(), // Validation handled manually
   status: z.enum(["Aktif", "Cuti", "Pensiun"] as const),
 });
@@ -184,6 +184,9 @@ export function GuruFormDialog({
 
   const handleSubmit = async (values: GuruFormValues) => {
     const data = { ...values };
+    
+    // Auto generate email from NIP
+    data.email = `${data.nip}@sditfajar.sch.id`;
 
     if (!isEditing && (!data.password || data.password.length < 6)) {
       form.setError("password", { message: "Password minimal 6 karakter untuk guru baru" });
@@ -239,20 +242,6 @@ export function GuruFormDialog({
                       {...field}
                       onChange={(e) => field.onChange(toTitleCase(e.target.value))}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="nip"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>NIP / NUPTK</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Masukkan NIP (Opsional)" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -409,12 +398,12 @@ export function GuruFormDialog({
 
             <FormField
               control={form.control}
-              name="email"
+              name="nip"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email <br></br>{isEditing && "(Untuk Login di akun Guru)"}</FormLabel>
+                  <FormLabel>NIP / NUPTK <br></br><span className="font-normal text-muted-foreground text-xs">{isEditing ? "(Digunakan untuk login)" : "(Akan otomatis menjadi NIP@sditfajar.sch.id)"}</span></FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="guru@sditfajar.com" {...field} />
+                    <Input placeholder="Hanya angka tanpa spasi (Contoh: 12345678)" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

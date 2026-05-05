@@ -64,10 +64,7 @@ export function GuruDetailDialog({ open, onOpenChange, guru }: GuruDetailDialogP
             <p className="text-muted-foreground">Nomor WhatsApp</p>
             <p className="font-medium">{guru.phone || "-"}</p>
           </div>
-          <div>
-            <p className="text-muted-foreground">Email (Login)</p>
-            <p className="font-medium break-words">{guru.email || "-"}</p>
-          </div>
+
         </div>
 
         <div className="mt-4 pt-4 border-t">

@@ -283,6 +283,26 @@ export function SiswaDataTable({
               </div>
               <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-sm">
                 <div>
+                  <span className="text-muted-foreground block mb-1">NIK</span>
+                  <span className="font-medium">{viewSiswa.nik || "-"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block mb-1">Jenis Kelamin</span>
+                  <span className="font-medium">{viewSiswa.jenisKelamin || "-"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block mb-1">Tempat, Tanggal Lahir</span>
+                  <span className="font-medium">{viewSiswa.tempatLahir ? `${viewSiswa.tempatLahir}, ${viewSiswa.tanggalLahir}` : "-"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block mb-1">Agama</span>
+                  <span className="font-medium">{viewSiswa.agama || "-"}</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-muted-foreground block mb-1">Alamat Lengkap</span>
+                  <span className="font-medium">{viewSiswa.alamatLengkap || "-"}</span>
+                </div>
+                <div>
                   <span className="text-muted-foreground block mb-1">Kelas</span>
                   <span className="font-medium">{viewSiswa.kelas}</span>
                 </div>

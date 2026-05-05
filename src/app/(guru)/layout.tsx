@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/admin/Navbar";
 import { SidebarGuru } from "@/components/guru/SidebarGuru";
+import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminAuth } from "@/lib/firebase/admin";
@@ -56,6 +57,7 @@ export default async function GuruLayout({
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 w-full max-w-[100vw]">
           {children}
         </main>
+        <DashboardFooter />
       </div>
     </div>
   );

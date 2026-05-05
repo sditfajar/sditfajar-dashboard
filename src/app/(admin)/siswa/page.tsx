@@ -58,10 +58,14 @@ export default function SiswaPage() {
 
       if (editingSiswa) {
         await updateSiswa(editingSiswa.nisn, {
+          nik: formData.nik,
           namaLengkap: formData.namaLengkap,
           kelas: formData.kelas,
           tempatLahir: formData.tempatLahir,
           tanggalLahir: formData.tanggalLahir,
+          jenisKelamin: formData.jenisKelamin,
+          agama: formData.agama,
+          alamatLengkap: formData.alamatLengkap,
           namaWali: formData.namaWali,
           whatsappOrtu: formData.whatsappOrtu,
           status: formData.status,
