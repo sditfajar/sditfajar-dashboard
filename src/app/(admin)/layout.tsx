@@ -35,9 +35,9 @@ export default async function AdminLayout({
     <div className="grid min-h-screen w-full lg:grid-cols-[256px_1fr]">
       <IdleLogout />
       <Sidebar />
-      <div className="flex flex-col">
+      <div className="flex flex-col w-full overflow-hidden bg-slate-50 dark:bg-slate-900/20">
         <Navbar />
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 w-full max-w-[100vw]">
           {children}
         </main>
         <DashboardFooter />

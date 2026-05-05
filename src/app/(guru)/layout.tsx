@@ -52,7 +52,7 @@ export default async function GuruLayout({
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[256px_1fr]">
       <SidebarGuru />
-      <div className="flex flex-col w-full overflow-hidden">
+      <div className="flex flex-col w-full overflow-hidden bg-slate-50 dark:bg-slate-900/20">
         <Navbar isGuruMode={true} />
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 w-full max-w-[100vw]">
           {children}

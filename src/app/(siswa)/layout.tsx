@@ -37,7 +37,7 @@ export default async function SiswaLayout({
     <div className="grid min-h-screen w-full lg:grid-cols-[256px_1fr]">
       <IdleLogout />
       <SidebarSiswa />
-      <div className="flex flex-col w-full overflow-hidden">
+      <div className="flex flex-col w-full overflow-hidden bg-slate-50 dark:bg-slate-900/20">
         <NavbarSiswa />
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-w-[100vw] lg:max-w-none">
           {children}

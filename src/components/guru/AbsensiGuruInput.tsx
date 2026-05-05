@@ -47,8 +47,8 @@ import {
 import { auth, db } from "@/lib/firebase/config";
 
 // KOORDINAT SEKOLAH SDIT Fajar
-const SCHOOL_LAT = -6.2594809123131006;
-const SCHOOL_LNG = 106.84364829185279;
+const SCHOOL_LAT = -6.41437284939044;
+const SCHOOL_LNG = 106.86558303564759;
 
 // Radius 200 Meter
 const MAX_DISTANCE_KM = 0.2;
