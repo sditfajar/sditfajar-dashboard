@@ -32,7 +32,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
+    <div className="grid min-h-screen w-full lg:grid-cols-[256px_1fr]">
       <IdleLogout />
       <Sidebar />
       <div className="flex flex-col">
